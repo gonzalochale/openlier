@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "OpenThumbail",
-  description: "YouTube thumbnail generator powered by AI",
+  description: "Open source YouTube thumbnail generator",
 };
 
 export default function RootLayout({
@@ -38,9 +38,9 @@ export default function RootLayout({
         inter.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
-      </body>
+      <TooltipProvider>
+        <body className="min-h-full flex flex-col">{children}</body>
+      </TooltipProvider>
     </html>
   );
 }
