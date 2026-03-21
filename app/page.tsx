@@ -1,6 +1,7 @@
 import { Preview } from "@/components/preview";
 import { GeneratePrompt } from "@/components/generate-prompt";
 import { UserMenu } from "@/components/user-menu";
+import { PaymentReturnHandler } from "@/components/payment-return-handler";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <UserMenu />
       <Preview />
       <GeneratePrompt />
+      <PaymentReturnHandler />
     </main>
   );
 }

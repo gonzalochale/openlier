@@ -1,0 +1,66 @@
+import { pool } from "@/lib/db";
+
+export async function deductCredit(userId: string): Promise<boolean> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{ credits: number }>(
+      `SELECT credits FROM "user" WHERE id = $1 FOR UPDATE`,
+      [userId],
+    );
+    if ((result.rows[0]?.credits ?? 0) < 1) {
+      await client.query("ROLLBACK");
+      return false;
+    }
+    await client.query(
+      `UPDATE "user" SET credits = credits - 1 WHERE id = $1`,
+      [userId],
+    );
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function refundCredit(userId: string): Promise<void> {
+  await pool.query(`UPDATE "user" SET credits = credits + 1 WHERE id = $1`, [
+    userId,
+  ]);
+}
+
+export async function grantCredits(
+  userId: string,
+  stripeSessionId: string,
+  creditsToAdd: number,
+  amountCents: number,
+): Promise<number | null> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const insert = await client.query(
+      `INSERT INTO credit_purchase (user_id, stripe_session_id, credits_added, amount_cents)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (stripe_session_id) DO NOTHING`,
+      [userId, stripeSessionId, creditsToAdd, amountCents],
+    );
+    if ((insert.rowCount ?? 0) === 0) {
+      await client.query("COMMIT");
+      return null; // already processed
+    }
+    const result = await client.query<{ credits: number }>(
+      `UPDATE "user" SET credits = credits + $1 WHERE id = $2 RETURNING credits`,
+      [creditsToAdd, userId],
+    );
+    await client.query("COMMIT");
+    return result.rows[0]?.credits ?? 0;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}

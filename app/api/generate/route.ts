@@ -3,24 +3,14 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 import { whitePng } from "@/lib/white-png";
 import { auth } from "@/lib/auth";
+import { deductCredit, refundCredit } from "@/lib/credits";
 import { headers } from "next/headers";
-
-const THUMBNAIL_SYSTEM_PROMPT = `
-Safety check (MANDATORY)
-
-Reject the request if the user's idea contains or implies ANY of the following:
-- Nudity, sexual content, or anything suggestive of an adult/+18 nature
-- Graphic violence, gore, or gratuitous depictions of injury or death
-- Hate speech, discrimination, or symbols associated with extremist groups
-- Content that sexualizes or endangers minors in any way
-- Realistic depictions of self-harm or suicide
-- Illegal activities presented approvingly (drug manufacturing, weapon smuggling, etc.)
-
-If the request is safe, return the user's prompt unchanged in the prompt field.`;
-
-const CREATE_IMAGES = process.env.GENERATE_IMAGES === "true";
-const SAFETY_MODEL = "gemini-3-flash-preview";
-const IMAGE_MODEL = "gemini-3.1-flash-image-preview";
+import {
+  CREATE_IMAGES,
+  IMAGE_MODEL,
+  SAFETY_MODEL,
+  THUMBNAIL_SYSTEM_PROMPT,
+} from "@/lib/constants";
 
 const safetySchema = z.object({
   blocked: z.boolean(),
@@ -63,6 +53,14 @@ export async function POST(req: Request) {
     return Response.json({ error: "Error generating image" }, { status: 500 });
   }
 
+  const deducted = await deductCredit(session.user.id);
+  if (!deducted) {
+    return Response.json(
+      { error: "Insufficient credits", code: "NO_CREDITS" },
+      { status: 402 },
+    );
+  }
+
   try {
     if (!CREATE_IMAGES) {
       await new Promise((r) => setTimeout(r, 5000));
@@ -83,6 +81,7 @@ export async function POST(req: Request) {
     });
 
     if (output.blocked) {
+      await refundCredit(session.user.id);
       console.warn("Content blocked by safety filter:", output.reason);
       return Response.json(
         {
@@ -95,6 +94,7 @@ export async function POST(req: Request) {
 
     const safePrompt = output.prompt;
     if (!safePrompt) {
+      await refundCredit(session.user.id);
       return Response.json(
         { error: "Failed to validate prompt" },
         { status: 500 },
@@ -146,6 +146,7 @@ export async function POST(req: Request) {
       enhancedPrompt: safePrompt,
     });
   } catch (err) {
+    await refundCredit(session.user.id);
     const message =
       err instanceof Error ? err.message : "Image generation failed";
     return Response.json({ error: message }, { status: 500 });

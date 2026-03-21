@@ -24,6 +24,7 @@ import {
 } from "@/components/file-upload";
 import { authClient } from "@/lib/auth-client";
 import { AuthModal } from "@/components/auth-modal";
+import { CreditsModal } from "@/components/credits-modal";
 import { resizeAndToBase64, formatFileSize } from "@/lib/utils";
 import { MAX_FILES } from "@/lib/constants";
 
@@ -33,6 +34,7 @@ export function GeneratePrompt() {
   const [prompt, setPrompt] = useState("");
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [creditsModalOpen, setCreditsModalOpen] = useState(false);
   const pendingActionRef = useRef<"submit" | "attach" | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { data: session, isPending: sessionPending } = authClient.useSession();
@@ -45,6 +47,7 @@ export function GeneratePrompt() {
     addVersion,
     pendingPrompt,
     setPendingPrompt,
+    decrementCredits,
   } = useThumbnailStore(
     useShallow((s) => ({
       versions: s.versions,
@@ -55,6 +58,7 @@ export function GeneratePrompt() {
       addVersion: s.addVersion,
       pendingPrompt: s.pendingPrompt,
       setPendingPrompt: s.setPendingPrompt,
+      decrementCredits: s.decrementCredits,
     })),
   );
 
@@ -124,8 +128,14 @@ export function GeneratePrompt() {
           }),
         });
         const data = await res.json();
+        if (res.status === 402) {
+          setLoading(false);
+          setCreditsModalOpen(true);
+          return;
+        }
         if (!res.ok) throw new Error(data.error ?? "Unknown error");
 
+        decrementCredits();
         addVersion({
           imageBase64: data.image,
           mimeType: data.mimeType,
@@ -148,6 +158,7 @@ export function GeneratePrompt() {
       startGenerating,
       addVersion,
       setLoading,
+      decrementCredits,
     ],
   );
 
@@ -293,6 +304,10 @@ export function GeneratePrompt() {
         </FileUpload>
       </div>
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+      <CreditsModal
+        open={creditsModalOpen}
+        onOpenChange={setCreditsModalOpen}
+      />
     </div>
   );
 }
