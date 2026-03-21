@@ -175,7 +175,7 @@ const PromptInputTextarea = React.forwardRef<
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       className={cn(
-        "text-primary min-h-11 w-full resize-none border-none bg-transparent dark:bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [scrollbar-color:var(--border)_transparent]",
+        "text-primary text-base min-h-11 w-full resize-none border-none bg-transparent dark:bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [scrollbar-color:var(--border)_transparent]",
         className,
       )}
       rows={1}

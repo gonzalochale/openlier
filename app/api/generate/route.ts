@@ -32,14 +32,20 @@ interface PreviousVersion {
   enhancedPrompt: string | null;
 }
 
+interface ReferenceImage {
+  imageBase64: string;
+  mimeType: string;
+}
+
 export async function POST(req: Request) {
   const body = await req.json();
-  const { prompt, previousVersion } = body as {
+  const { prompt, previousVersion, referenceImages } = body as {
     prompt: string;
     previousVersion?: PreviousVersion;
+    referenceImages?: ReferenceImage[];
   };
 
-  if (!prompt) {
+  if (!prompt && !referenceImages?.length) {
     return Response.json({ error: "Prompt is required" }, { status: 400 });
   }
 
@@ -88,12 +94,38 @@ export async function POST(req: Request) {
       );
     }
 
-    const imagePrompt = previousVersion
-      ? {
-          text: safePrompt,
-          images: [Buffer.from(previousVersion.imageBase64, "base64")],
-        }
-      : safePrompt;
+    const hasReferenceImages = referenceImages && referenceImages.length > 0;
+    const hasPreviousVersion = !!previousVersion;
+
+    let imagePromptText = safePrompt;
+
+    if (hasPreviousVersion && hasReferenceImages) {
+      imagePromptText =
+        `The FIRST image is the previously generated thumbnail — use it as the base to edit and improve upon based on the instruction below.\n` +
+        `The next ${referenceImages.length} image(s) are visual references provided by the user (e.g. branding, style, composition inspiration) — do NOT reproduce them directly, use them as context.\n\n` +
+        `Instruction: ${imagePromptText}`;
+    } else if (hasPreviousVersion) {
+      imagePromptText = `The attached image is the previously generated thumbnail. Edit and improve it based on this instruction: ${imagePromptText}`;
+    } else if (hasReferenceImages) {
+      imagePromptText =
+        `The attached image(s) are visual references provided by the user (e.g. branding, style, colors, faces, composition). ` +
+        `Use them as context to generate a new YouTube thumbnail. Do NOT copy them — create an original thumbnail inspired by them.\n\n` +
+        `Instruction: ${imagePromptText}`;
+    }
+
+    const allImages: Buffer[] = [
+      ...(hasPreviousVersion
+        ? [Buffer.from(previousVersion.imageBase64, "base64")]
+        : []),
+      ...(hasReferenceImages
+        ? referenceImages.map((r) => Buffer.from(r.imageBase64, "base64"))
+        : []),
+    ];
+
+    const imagePrompt =
+      allImages.length > 0
+        ? { text: imagePromptText, images: allImages }
+        : imagePromptText;
 
     const { image } = await generateImage({
       model: google.image(IMAGE_MODEL),
