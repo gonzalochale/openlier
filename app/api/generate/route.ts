@@ -1,6 +1,7 @@
 import { generateImage, generateText, Output } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
+import { whitePng } from "@/lib/white-png";
 
 const THUMBNAIL_SYSTEM_PROMPT = `
 Safety check (MANDATORY)
@@ -15,11 +16,9 @@ Reject the request if the user's idea contains or implies ANY of the following:
 
 If the request is safe, return the user's prompt unchanged in the prompt field.`;
 
-const isDev = process.env.NODE_ENV === "development";
-const SAFETY_MODEL = isDev ? "gemini-2.5-flash" : "gemini-3.1-flash-preview";
-const IMAGE_MODEL = isDev
-  ? "gemini-2.5-flash-image"
-  : "gemini-3.1-flash-image-preview";
+const CREATE_IMAGES = process.env.GENERATE_IMAGES === "true";
+const SAFETY_MODEL = "gemini-3-flash-preview";
+const IMAGE_MODEL = "gemini-3.1-flash-image-preview";
 
 const safetySchema = z.object({
   blocked: z.boolean(),
@@ -45,12 +44,22 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
+
   if (!apiKey) {
     console.error("Missing Google AI Studio API key");
     return Response.json({ error: "Error generating image" }, { status: 500 });
   }
 
   try {
+    if (!CREATE_IMAGES) {
+      await new Promise((r) => setTimeout(r, 800));
+      return Response.json({
+        image: whitePng(1280, 720),
+        mimeType: "image/png",
+        enhancedPrompt: prompt,
+      });
+    }
+
     const google = createGoogleGenerativeAI({ apiKey });
 
     const { output } = await generateText({

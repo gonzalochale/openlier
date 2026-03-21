@@ -1,10 +1,11 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { ArrowDown, Download, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function Preview() {
   const { versions, selectedVersionId, loading, download } = useThumbnailStore(
@@ -21,32 +22,40 @@ export function Preview() {
 
   return (
     <div className="w-full flex-1 flex flex-col items-center justify-center gap-2">
-      <div className="w-full max-w-4xl">
-        <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-          {isFirstLoad && <Skeleton className="absolute inset-0 rounded-lg" />}
-          {selectedVersion && (
-            <img
-              src={`data:${selectedVersion.mimeType};base64,${selectedVersion.imageBase64}`}
-              alt={`Thumbnail v${selectedVersion.id}`}
-              className="w-full h-full object-cover rounded-lg"
+      {selectedVersion && (
+        <div className="w-full flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">v{selectedVersion.id}</p>
+          <Tooltip>
+            <TooltipTrigger
+              disabled={loading}
+              render={
+                <Button
+                  variant="outline"
+                  onClick={() => download(selectedVersion.id)}
+                  size="icon-lg"
+                  disabled={loading}
+                >
+                  <ArrowDown size={18} />
+                </Button>
+              }
+              onClick={(event) => event.stopPropagation()}
             />
-          )}
+            <TooltipContent>
+              <p>Download</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
+      )}
+      <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+        {isFirstLoad && (
+          <Skeleton className="absolute inset-0 rounded-lg sm:rounded-2xl" />
+        )}
         {selectedVersion && (
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-muted-foreground">
-              v{selectedVersion.id}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => download(selectedVersion.id)}
-              className="gap-1.5"
-            >
-              <Download size={14} />
-              Download
-            </Button>
-          </div>
+          <img
+            src={`data:${selectedVersion.mimeType};base64,${selectedVersion.imageBase64}`}
+            alt={`Thumbnail v${selectedVersion.id}`}
+            className="w-full h-full object-cover rounded-lg sm:rounded-2xl"
+          />
         )}
       </div>
     </div>

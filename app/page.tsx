@@ -1,11 +1,11 @@
 import { Preview } from "@/components/preview";
-import { PromptInput } from "@/components/prompt-input";
+import { GeneratePrompt } from "@/components/generate-prompt";
 
 export default function Home() {
   return (
-    <main className="w-full max-w-7xl mx-auto h-svh flex flex-col justify-center items-center p-5 pb-52">
+    <main className="w-full max-w-5xl mx-auto h-svh flex flex-col justify-center items-center p-5 pb-52">
       <Preview />
-      <PromptInput />
+      <GeneratePrompt />
     </main>
   );
 }
