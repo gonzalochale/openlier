@@ -16,9 +16,17 @@ import {
 export function GeneratePrompt() {
   const [prompt, setPrompt] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { versions, loading, setLoading, startGenerating, addVersion } = useThumbnailStore(
+  const {
+    versions,
+    selectedVersionId,
+    loading,
+    setLoading,
+    startGenerating,
+    addVersion,
+  } = useThumbnailStore(
     useShallow((s) => ({
       versions: s.versions,
+      selectedVersionId: s.selectedVersionId,
       loading: s.loading,
       setLoading: s.setLoading,
       startGenerating: s.startGenerating,
@@ -32,7 +40,7 @@ export function GeneratePrompt() {
     setPrompt("");
     startGenerating();
 
-    const previousVersion = versions.length > 0 ? versions.at(-1) : undefined;
+    const previousVersion = versions.find((v) => v.id === selectedVersionId);
 
     try {
       const res = await fetch("/api/generate", {
@@ -68,8 +76,8 @@ export function GeneratePrompt() {
   }
 
   const placeholder =
-    versions.length > 0
-      ? "Describe changes for the next version…"
+    selectedVersionId !== null
+      ? `Describe changes from v${selectedVersionId}…`
       : "Create a thumbnail for my YouTube video with the title...";
 
   return (
@@ -82,7 +90,11 @@ export function GeneratePrompt() {
           isLoading={loading}
           disabled={loading}
         >
-          <PromptInputTextarea ref={textareaRef} placeholder={placeholder} />
+          <PromptInputTextarea
+            ref={textareaRef}
+            placeholder={placeholder}
+            autoFocus
+          />
           <PromptInputActions className="justify-end px-1 pb-1">
             <PromptInputAction tooltip="Send">
               <Button

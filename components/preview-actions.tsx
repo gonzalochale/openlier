@@ -1,12 +1,18 @@
 "use client";
 
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Check } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { TextShimmer } from "./ui/text-shimmer";
 import { TextLoop } from "./ui/text-loop";
 
@@ -47,16 +53,23 @@ export function PreviewActions() {
     const steps = [2.5, 3, 3.5, 4, 4.5, 5];
     return steps[Math.floor(Math.random() * steps.length)];
   };
-  const { versions, selectedVersionId, generating, loading, download } =
-    useThumbnailStore(
-      useShallow((s) => ({
-        versions: s.versions,
-        selectedVersionId: s.selectedVersionId,
-        generating: s.generating,
-        loading: s.loading,
-        download: s.download,
-      })),
-    );
+  const {
+    versions,
+    selectedVersionId,
+    generating,
+    loading,
+    download,
+    selectVersion,
+  } = useThumbnailStore(
+    useShallow((s) => ({
+      versions: s.versions,
+      selectedVersionId: s.selectedVersionId,
+      generating: s.generating,
+      loading: s.loading,
+      download: s.download,
+      selectVersion: s.selectVersion,
+    })),
+  );
 
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
   if (!selectedVersion && !generating) return null;
@@ -109,9 +122,33 @@ export function PreviewActions() {
               exit={{ y: -8, opacity: 0 }}
               transition={{ duration: 0.15, ease: [0.215, 0.61, 0.355, 1] }}
             >
-              <p className="font-mono text-sm text-muted-foreground">
-                v{selectedVersion!.id}
-              </p>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      className="font-mono text-sm text-muted-foreground"
+                    />
+                  }
+                >
+                  v{selectedVersion!.id}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-32 max-h-50 overflow-y-auto"
+                >
+                  {[...versions].reverse().map((v) => (
+                    <DropdownMenuItem
+                      key={v.id}
+                      onClick={() => selectVersion(v.id)}
+                      className="font-mono justify-between"
+                    >
+                      v{v.id}
+                      {v.id === selectedVersionId && <Check data-icon />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </motion.div>
           )}
         </AnimatePresence>
