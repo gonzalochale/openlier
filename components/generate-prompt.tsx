@@ -286,11 +286,7 @@ export function GeneratePrompt() {
 
   const doSubmit = useCallback(
     async (promptValue: string) => {
-      if (
-        (!promptValue.trim() && fileEntries.length === 0 && !channelRef) ||
-        loading
-      )
-        return;
+      if (!promptValue.trim() || loading) return;
       const trimmed = promptValue.trim();
       const entriesToSubmit = fileEntries;
       const channelRefSnapshot = channelRef;
@@ -372,7 +368,7 @@ export function GeneratePrompt() {
   const hasExtraMentions =
     textSegments?.some((s) => s.type === "extra") ?? false;
   const hasContent =
-    (!!effectivePrompt || fileEntries.length > 0) &&
+    !!effectivePrompt &&
     !hasExtraMentions &&
     channelWidget?.stage !== "error" &&
     channelWidget?.stage !== "loading" &&
@@ -439,7 +435,7 @@ export function GeneratePrompt() {
                 {fileEntries.map(({ file, url }, index) => (
                   <div
                     key={url}
-                    className="bg-secondary flex items-center gap-2 rounded-lg p-1.5 pr-2.5 text-sm"
+                    className="bg-background border flex items-center gap-2 rounded-lg p-1.5 pr-2.5 text-sm"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <img
@@ -448,7 +444,7 @@ export function GeneratePrompt() {
                       className="size-9 rounded-sm object-cover shrink-0"
                     />
                     <div className="flex flex-col min-w-0">
-                      <span className="max-w-28 truncate text-xs font-medium leading-tight">
+                      <span className="max-w-10 truncate text-xs font-medium leading-tight">
                         {file.name}
                       </span>
                       <span className="text-muted-foreground text-xs leading-tight">
