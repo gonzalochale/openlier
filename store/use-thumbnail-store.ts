@@ -28,6 +28,7 @@ interface ThumbnailState {
   decrementCredits: () => void;
   download: (id?: number) => void;
   clear: () => void;
+  clearHistory: () => void;
 }
 
 export const useThumbnailStore = create<ThumbnailState>()(
@@ -85,6 +86,8 @@ export const useThumbnailStore = create<ThumbnailState>()(
       },
 
       clear: () => set({ versions: [], selectedVersionId: null, error: null }),
+
+      clearHistory: () => set({ versions: [], selectedVersionId: null }),
     }),
     {
       name: "thumbnail-store",

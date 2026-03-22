@@ -21,7 +21,7 @@ export function Preview() {
     <div className="w-full max-w-5xl flex-1 flex flex-col items-center justify-center gap-2">
       <PreviewActions />
       <div
-        className="relative w-full overflow-hidden rounded-lg sm:rounded-2xl"
+        className="relative w-full overflow-hidden rounded-xl"
         style={{ aspectRatio: "16/9" }}
       >
         <AnimatePresence mode="sync">
@@ -34,14 +34,14 @@ export function Preview() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              <Skeleton className="w-full h-full rounded-lg sm:rounded-2xl" />
+              <Skeleton className="w-full h-full" />
             </motion.div>
           ) : selectedVersion ? (
             <motion.img
               key={`image-${selectedVersion.id}`}
               src={`data:${selectedVersion.mimeType};base64,${selectedVersion.imageBase64}`}
               alt={`Thumbnail v${selectedVersion.id}`}
-              className="absolute inset-0 w-full h-full object-cover rounded-lg sm:rounded-2xl"
+              className="absolute inset-0 w-full h-full object-cover"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

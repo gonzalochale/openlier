@@ -1,8 +1,14 @@
 "use client";
 
-import { ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+} from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
@@ -29,6 +35,7 @@ export function PreviewActions() {
     const steps = [2.5, 3, 3.5, 4, 4.5, 5];
     return steps[Math.floor(Math.random() * steps.length)];
   };
+  const [copying, setCopying] = useState(false);
   const {
     versions,
     selectedVersionId,
@@ -46,6 +53,29 @@ export function PreviewActions() {
       selectVersion: s.selectVersion,
     })),
   );
+
+  async function copyToClipboard() {
+    if (!selectedVersion) return;
+    if (typeof ClipboardItem === "undefined") {
+      toast("Clipboard not supported in this browser");
+      return;
+    }
+    setCopying(true);
+    try {
+      const bytes = Uint8Array.from(atob(selectedVersion.imageBase64), (c) =>
+        c.charCodeAt(0),
+      );
+      const blob = new Blob([bytes], { type: selectedVersion.mimeType });
+      await navigator.clipboard.write([
+        new ClipboardItem({ [selectedVersion.mimeType]: blob }),
+      ]);
+      toast("Copied to clipboard");
+    } catch {
+      toast("Failed to copy to clipboard");
+    } finally {
+      setCopying(false);
+    }
+  }
 
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
   if (!selectedVersion && !generating) return null;
@@ -140,7 +170,7 @@ export function PreviewActions() {
                             <img
                               src={`data:${v.mimeType};base64,${v.imageBase64}`}
                               alt={`v${v.id}`}
-                              className="aspect-video w-16 shrink-0 rounded-sm object-cover select-none"
+                              className="aspect-video w-16 shrink-0 rounded-sm object-cover select-none bg-accent"
                               draggable={false}
                             />
                           </DropdownMenuItem>
@@ -162,25 +192,46 @@ export function PreviewActions() {
           )}
         </AnimatePresence>
       </div>
-      <Tooltip>
-        <TooltipTrigger
-          disabled={loading || !selectedVersion}
-          render={
-            <Button
-              variant="outline"
-              onClick={() => selectedVersion && download(selectedVersion.id)}
-              size="icon-lg"
-              disabled={loading || !selectedVersion}
-            >
-              <ArrowDown size={18} />
-            </Button>
-          }
-          onClick={(event) => event.stopPropagation()}
-        />
-        <TooltipContent>
-          <p>Download</p>
-        </TooltipContent>
-      </Tooltip>
+      <div className="flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger
+            disabled={loading || !selectedVersion || copying}
+            render={
+              <Button
+                variant="ghost"
+                onClick={copyToClipboard}
+                size="icon-lg"
+                disabled={loading || !selectedVersion || copying}
+              >
+                <Copy size={16} />
+              </Button>
+            }
+            onClick={(event) => event.stopPropagation()}
+          />
+          <TooltipContent>
+            <p>Copy to clipboard</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            disabled={loading || !selectedVersion}
+            render={
+              <Button
+                variant="ghost"
+                onClick={() => selectedVersion && download(selectedVersion.id)}
+                size="icon-lg"
+                disabled={loading || !selectedVersion}
+              >
+                <ArrowDown size={18} />
+              </Button>
+            }
+            onClick={(event) => event.stopPropagation()}
+          />
+          <TooltipContent>
+            <p>Download</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   );
 }

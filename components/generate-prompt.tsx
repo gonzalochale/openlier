@@ -33,6 +33,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { useThumbnailShortcuts } from "@/hooks/use-thumbnail-shortcuts";
 
 type FileEntry = { file: File; url: string };
 
@@ -62,7 +63,6 @@ type TextSegment =
   | { type: "active"; text: string }
   | { type: "extra"; text: string };
 
-/** Split text into plain, active @mention, and extra @mention segments */
 function getTextSegments(
   text: string,
   activeHandle: string | null,
@@ -130,6 +130,7 @@ function MentionStatusChip({
 }
 
 export function GeneratePrompt() {
+  useThumbnailShortcuts();
   const [prompt, setPrompt] = useState("");
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -228,7 +229,7 @@ export function GeneratePrompt() {
     if (pendingPrompt !== null) setPendingPrompt(value.trim() || null);
 
     const match = value.match(MENTION_RE);
-    const handle = match ? match[1] : null; // "" for bare @, null for no @
+    const handle = match ? match[1] : null;
 
     if (handle === null) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -239,7 +240,6 @@ export function GeneratePrompt() {
     }
 
     if (handle === "") {
-      // Bare @ — show skeleton immediately, nothing to fetch yet
       if (debounceRef.current) clearTimeout(debounceRef.current);
       pendingHandleRef.current = null;
       if (channelWidget?.stage !== "loading" || channelWidget.handle !== "") {
@@ -248,10 +248,8 @@ export function GeneratePrompt() {
       return;
     }
 
-    // Already debouncing for this exact handle — don't restart
     if (handle === pendingHandleRef.current) return;
 
-    // Already fully resolved for this handle — nothing to do
     const resolvedHandle =
       channelWidget?.stage === "found"
         ? channelWidget.ref.handle
@@ -260,7 +258,6 @@ export function GeneratePrompt() {
           : null;
     if (handle === resolvedHandle) return;
 
-    // New handle — show skeleton chip immediately, debounce only the fetch
     pendingHandleRef.current = handle;
     inflightRef.current = null;
     setChannelWidget({ stage: "loading", handle });
@@ -496,8 +493,6 @@ export function GeneratePrompt() {
                           </MentionStatusChip>
                         );
                       }
-
-                      // type === "active"
                       if (channelRef) {
                         return (
                           <HoverCard key={i}>
@@ -556,7 +551,6 @@ export function GeneratePrompt() {
                           </MentionStatusChip>
                         );
                       }
-                      // loading stage — show skeleton grid on hover
                       return (
                         <HoverCard key={i}>
                           <HoverCardTrigger

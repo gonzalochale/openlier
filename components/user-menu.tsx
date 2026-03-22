@@ -70,7 +70,7 @@ export function UserMenu() {
                   <TooltipTrigger
                     render={
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         size="lg"
                         className="min-w-24 justify-between gap-5"
                         onClick={() => setCreditsOpen(true)}
