@@ -13,52 +13,20 @@ import {
   SAFETY_MODEL,
   THUMBNAIL_SYSTEM_PROMPT,
 } from "@/lib/constants";
-
-interface ReferenceImage {
-  imageBase64: string;
-  mimeType: string;
-}
-
-async function fetchImages(urls: string[]): Promise<ReferenceImage[]> {
-  const results = await Promise.allSettled(
-    urls.map(async (url) => {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(`Failed to fetch image: ${url}`);
-      const buf = await r.arrayBuffer();
-      return {
-        imageBase64: Buffer.from(buf).toString("base64"),
-        mimeType: "image/jpeg",
-      } satisfies ReferenceImage;
-    }),
-  );
-  return results
-    .filter(
-      (r): r is PromiseFulfilledResult<ReferenceImage> =>
-        r.status === "fulfilled",
-    )
-    .map((r) => r.value);
-}
+import {
+  buildImagePrompt,
+  fetchImages,
+  type ChannelRef,
+  type PreviousVersion,
+  type ReferenceImage,
+  type VideoRef,
+} from "@/lib/build-image-prompt";
 
 const safetySchema = z.object({
   blocked: z.boolean(),
   reason: z.string().optional(),
   prompt: z.string().optional(),
 });
-
-interface PreviousVersion {
-  imageBase64: string;
-  mimeType: string;
-  enhancedPrompt: string | null;
-}
-
-interface ChannelRef {
-  urls: string[];
-  handle: string;
-}
-
-interface VideoRef {
-  url: string;
-}
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -93,14 +61,14 @@ export async function POST(req: Request) {
     Promise.all((channelRefs ?? []).map((ch) => fetchImages(ch.urls))),
     Promise.all((videoRefs ?? []).map((vr) => fetchImages([vr.url]))),
   ]);
-  const allReferenceImages = [
+
+  const totalReferenceCount = [
     ...(referenceImages ?? []),
     ...channelImageGroups.flat(),
     ...videoImageGroups.flat(),
-  ].slice(0, MAX_FILES);
+  ].length;
 
   const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
-
   if (!apiKey) {
     console.error("Missing Google AI Studio API key");
     return Response.json({ error: "Error generating image" }, { status: 500 });
@@ -154,83 +122,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const hasReferenceImages = allReferenceImages.length > 0;
-    const hasPreviousVersion = !!previousVersion;
+    const clampedReferenceImages = (referenceImages ?? []).slice(
+      0,
+      Math.max(
+        0,
+        MAX_FILES - (totalReferenceCount - (referenceImages ?? []).length),
+      ),
+    );
 
-    const imageGuide: string[] = [];
-    let enriched = safePrompt;
-    let imgIdx = hasPreviousVersion ? 2 : 1;
+    const { text, images } = buildImagePrompt({
+      safePrompt,
+      channelRefs,
+      channelImageGroups,
+      videoRefs,
+      videoImageGroups,
+      referenceImages: clampedReferenceImages,
+      previousVersion,
+    });
 
-    const userRefCount = (referenceImages ?? []).length;
-    if (userRefCount > 0) {
-      const end = imgIdx + userRefCount - 1;
-      const range =
-        userRefCount === 1 ? `Image ${imgIdx}` : `Images ${imgIdx}–${end}`;
-      imageGuide.push(
-        `${range}: User-provided visual reference(s) (branding, style, colors, composition).`,
-      );
-      imgIdx += userRefCount;
-    }
-
-    for (const [i, ch] of (channelRefs ?? []).entries()) {
-      const fetchedCount = channelImageGroups[i]?.length ?? 0;
-      if (fetchedCount === 0) continue;
-      const end = imgIdx + fetchedCount - 1;
-      const range =
-        fetchedCount === 1 ? `Image ${imgIdx}` : `Images ${imgIdx}–${end}`;
-      const instruction = `${range}: Thumbnails from @${ch.handle} — use for STYLE ONLY (colors, composition, typography; do NOT copy faces or specific objects).`;
-      imageGuide.push(instruction);
-      const pat = new RegExp(
-        `@${ch.handle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
-        "gi",
-      );
-      const hint =
-        fetchedCount === 1
-          ? `@${ch.handle} (image ${imgIdx})`
-          : `@${ch.handle} (images ${imgIdx}–${end})`;
-      enriched = enriched.replace(pat, hint);
-      imgIdx += fetchedCount;
-    }
-
-    for (const [i] of (videoRefs ?? []).entries()) {
-      const fetchedCount = videoImageGroups[i]?.length ?? 0;
-      if (fetchedCount === 0) continue;
-      const instruction = `Image ${imgIdx}: Video thumbnail — use for STYLE ONLY (colors, composition, typography; do NOT copy faces or specific objects).`;
-      imageGuide.push(instruction);
-      imgIdx++;
-    }
-
-    let imagePromptText = enriched;
-
-    if (hasPreviousVersion) {
-      const prevLine = hasReferenceImages
-        ? `Image 1: Previously generated thumbnail — use as the base to edit.`
-        : null;
-      const guide = [prevLine, ...imageGuide].filter(Boolean).join("\n");
-      imagePromptText = guide
-        ? `${guide}\n\nInstruction: ${imagePromptText}`
-        : `The attached image is the previously generated thumbnail. Edit and improve it based on this instruction: ${imagePromptText}`;
-    } else if (hasReferenceImages) {
-      const guide = imageGuide.join("\n");
-      imagePromptText =
-        `${guide}\n\n` +
-        `Generate a new original YouTube thumbnail.\n\n` +
-        `Instruction: ${imagePromptText}`;
-    }
-
-    const allImages: Buffer[] = [
-      ...(hasPreviousVersion
-        ? [Buffer.from(previousVersion.imageBase64, "base64")]
-        : []),
-      ...(hasReferenceImages
-        ? allReferenceImages.map((r) => Buffer.from(r.imageBase64, "base64"))
-        : []),
-    ];
-
-    const imagePrompt =
-      allImages.length > 0
-        ? { text: imagePromptText, images: allImages }
-        : imagePromptText;
+    const imagePrompt = images.length > 0 ? { text, images } : text;
 
     const { image } = await generateImage({
       model: google.image(IMAGE_MODEL),

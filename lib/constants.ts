@@ -37,6 +37,7 @@ export const GENERATING_PHRASES = [
   "Creating thumbnails that pop...",
   "Making your content stand out...",
 ];
+export const CREDIT_UNIT_AMOUNT_CENTS = 20;
 export const MAX_FILES = 10;
 export const MAX_PROMPT_LENGTH = 1000;
 export const DEBOUNCE_MS = 600;

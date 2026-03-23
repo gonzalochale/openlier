@@ -9,9 +9,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { CREDIT_UNIT_AMOUNT_CENTS } from "@/lib/constants";
+import { Sparkle } from "lucide-react";
 
 interface CreditsModalProps {
   open: boolean;
@@ -19,15 +20,14 @@ interface CreditsModalProps {
 }
 
 const PLANS = [
-  { credits: 10, price: 2.5 },
-  { credits: 25, price: 6.25 },
-  { credits: 50, price: 12.5, popular: true },
-  { credits: 100, price: 25 },
+  { credits: 10 },
+  { credits: 25 },
+  { credits: 50, popular: true },
+  { credits: 100 },
 ] as const;
 
 export function CreditsModal({ open, onOpenChange }: CreditsModalProps) {
   const router = useRouter();
-  const credits = useThumbnailStore((s) => s.credits);
   const [loadingAmount, setLoadingAmount] = useState<number | null>(null);
 
   async function handleBuy(amount: number) {
@@ -52,16 +52,8 @@ export function CreditsModal({ open, onOpenChange }: CreditsModalProps) {
         <DialogHeader>
           <DialogTitle>Add credits</DialogTitle>
           <DialogDescription>
-            {credits !== null ? (
-              <>
-                You have{" "}
-                <strong className="text-foreground font-medium">
-                  {credits}
-                </strong>{" "}
-                credit{credits !== 1 ? "s" : ""}.{" "}
-              </>
-            ) : null}
-            Each generation costs 1 credit.
+            Each generation costs 1 credit, the pricing will increase in the
+            future as we add more features so grab a pack now!
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">
@@ -88,13 +80,19 @@ export function CreditsModal({ open, onOpenChange }: CreditsModalProps) {
                       {plan.credits} credits
                     </span>
                     {"popular" in plan && plan.popular && (
-                      <Badge>popular</Badge>
+                      <Badge>
+                        <Sparkle className="w-3 h-3" />
+                        Popular
+                      </Badge>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="text-sm font-semibold tabular-nums">
-                    ${plan.price.toFixed(2)}
+                    $
+                    {((plan.credits * CREDIT_UNIT_AMOUNT_CENTS) / 100).toFixed(
+                      2,
+                    )}
                   </span>
                 </div>
               </button>
