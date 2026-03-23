@@ -42,7 +42,8 @@ export function Preview() {
               key={`image-${selectedVersion.id}`}
               src={`data:${selectedVersion.mimeType};base64,${selectedVersion.imageBase64}`}
               alt={`Thumbnail v${selectedVersion.id}`}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover select-none"
+              draggable={false}
               initial={shouldReduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={shouldReduceMotion ? {} : { opacity: 0 }}
