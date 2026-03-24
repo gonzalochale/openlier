@@ -94,7 +94,7 @@ export function UserMenu() {
                       <Button
                         variant="secondary"
                         size="lg"
-                        className="min-w-24 justify-between gap-5"
+                        className="w-28 justify-between gap-5"
                         onClick={() => setCreditsOpen(true)}
                       >
                         Credits

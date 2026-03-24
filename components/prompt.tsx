@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { animate } from "motion/react";
 import React, {
   createContext,
   useContext,
@@ -120,11 +121,11 @@ const PromptInputTextarea = React.forwardRef<
   const { value, setValue, maxHeight, onSubmit, disabled, textareaRef } =
     usePromptInput();
 
+  const heightAnimRef = useRef<ReturnType<typeof animate> | null>(null);
+
   const adjustHeight = (el: HTMLTextAreaElement | null) => {
     if (!el || disableAutosize) return;
-
     el.style.height = "auto";
-
     if (typeof maxHeight === "number") {
       el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
     } else {
@@ -144,15 +145,21 @@ const PromptInputTextarea = React.forwardRef<
 
   useLayoutEffect(() => {
     if (!textareaRef.current || disableAutosize) return;
-
     const el = textareaRef.current;
-    el.style.height = "auto";
 
-    if (typeof maxHeight === "number") {
-      el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
-    } else {
-      el.style.height = `min(${el.scrollHeight}px, ${maxHeight})`;
-    }
+    const from = el.offsetHeight;
+    el.style.height = "auto";
+    const to =
+      typeof maxHeight === "number"
+        ? Math.min(el.scrollHeight, maxHeight)
+        : el.scrollHeight;
+    el.style.height = `${from}px`;
+
+    heightAnimRef.current?.stop();
+    heightAnimRef.current = animate(el, { height: to }, {
+      duration: 0.22,
+      ease: [0.25, 1, 0.5, 1],
+    });
   }, [value, maxHeight, disableAutosize]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
