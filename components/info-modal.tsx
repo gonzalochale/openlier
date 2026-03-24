@@ -21,7 +21,7 @@ export function InfoModal() {
       />
       <DialogContent showCloseButton={false} className="max-w-xs">
         <DialogHeader>
-          <DialogTitle>What is OpenThumbnail?</DialogTitle>
+          <DialogTitle>What is Open Outlier?</DialogTitle>
           <DialogDescription>
             Open-source AI thumbnail generator, it allows you to create stunning
             thumbnails for your content with ease.
@@ -29,7 +29,7 @@ export function InfoModal() {
             <br />
             The code is available on{" "}
             <a
-              href="https://github.com/gonzalochale/openthumbnail"
+              href="https://github.com/gonzalochale/openoutlier"
               target="_blank"
               rel="noopener noreferrer"
             >
