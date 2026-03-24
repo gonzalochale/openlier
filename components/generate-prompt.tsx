@@ -26,7 +26,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { AuthModal } from "@/components/auth-modal";
 import { CreditsModal } from "@/components/credits-modal";
-import { resizeAndToBase64 } from "@/lib/utils";
+import { cn, resizeAndToBase64 } from "@/lib/utils";
 import { MAX_PROMPT_LENGTH } from "@/lib/constants";
 import {
   type ChannelReference,
@@ -558,20 +558,44 @@ export function GeneratePrompt() {
                 }}
               />
             </div>
-            <PromptInputActions className="justify-between px-1 pb-1 pt-5">
+            <PromptInputActions className="px-1 pb-1 pt-5 justify-end">
               {session ? (
-                <FileUploadTrigger
-                  className={buttonVariants({
-                    variant: "secondary",
-                    size: "lg",
-                  })}
-                  disabled={loading || selectedVersionId !== null}
-                >
-                  <Paperclip className="size-4" />
-                  {fileEntries.length > 0
-                    ? "Edit starting image"
-                    : "Add starting image"}
-                </FileUploadTrigger>
+                <AnimatePresence initial={false}>
+                  {versions.length === 0 && (
+                    <motion.div
+                      key="starting-image-btn"
+                      initial={
+                        shouldReduceMotion
+                          ? { opacity: 0 }
+                          : { opacity: 0, scale: 0.9, filter: "blur(4px)" }
+                      }
+                      animate={
+                        shouldReduceMotion
+                          ? { opacity: 1 }
+                          : { opacity: 1, scale: 1, filter: "blur(0px)" }
+                      }
+                      exit={
+                        shouldReduceMotion
+                          ? { opacity: 0 }
+                          : { opacity: 0, scale: 0.9, filter: "blur(4px)" }
+                      }
+                      transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+                    >
+                      <FileUploadTrigger
+                        className={buttonVariants({
+                          variant: "secondary",
+                          size: "lg",
+                        })}
+                        disabled={loading || selectedVersionId !== null}
+                      >
+                        <Paperclip className="size-4" />
+                        {fileEntries.length > 0
+                          ? "Edit starting image"
+                          : "Add starting image"}
+                      </FileUploadTrigger>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               ) : (
                 <button
                   type="button"
