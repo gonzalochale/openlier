@@ -6,7 +6,7 @@ import { useThumbnailStore } from "@/store/use-thumbnail-store";
 export function useThumbnailShortcuts() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const { versions, selectedVersionId, loading, download, selectVersion } =
+      const { versions, selectedVersionId, loading, download, copy, selectVersion } =
         useThumbnailStore.getState();
       const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
@@ -14,6 +14,14 @@ export function useThumbnailShortcuts() {
         if (!selectedVersion || loading) return;
         e.preventDefault();
         download(selectedVersion.id);
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === "c") {
+        if (!selectedVersion || loading) return;
+        if (window.getSelection()?.toString()) return;
+        e.preventDefault();
+        copy(selectedVersion.id);
         return;
       }
 

@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
@@ -34,7 +33,7 @@ export function PreviewActions() {
   const shouldReduceMotion = useReducedMotion();
   const phraseIndexRef = useRef(0);
   const randomInterval = () => randomItem([2.5, 3, 3.5, 4, 4.5, 5]);
-  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied">("idle");
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [downloadedKey, setDownloadedKey] = useState(0);
   const [downloaded, setDownloaded] = useState(false);
@@ -45,6 +44,9 @@ export function PreviewActions() {
     generating,
     loading,
     download,
+    downloadTick,
+    copy,
+    copyTick,
     selectVersion,
   } = useThumbnailStore(
     useShallow((s) => ({
@@ -53,6 +55,9 @@ export function PreviewActions() {
       generating: s.generating,
       loading: s.loading,
       download: s.download,
+      downloadTick: s.downloadTick,
+      copy: s.copy,
+      copyTick: s.copyTick,
       selectVersion: s.selectVersion,
     })),
   );
@@ -65,29 +70,22 @@ export function PreviewActions() {
     if (generating) phraseIndexRef.current = 0;
   }, [generating]);
 
-  async function copyToClipboard() {
-    if (!selectedVersion || copyState === "copying") return;
-    if (typeof ClipboardItem === "undefined") {
-      toast("Clipboard not supported in this browser");
-      return;
-    }
-    setCopyState("copying");
-    try {
-      const bytes = Uint8Array.from(atob(selectedVersion.imageBase64), (c) =>
-        c.charCodeAt(0),
-      );
-      const blob = new Blob([bytes], { type: selectedVersion.mimeType });
-      await navigator.clipboard.write([
-        new ClipboardItem({ [selectedVersion.mimeType]: blob }),
-      ]);
-      setCopyState("copied");
-      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
-      copyResetTimer.current = setTimeout(() => setCopyState("idle"), 600);
-    } catch {
-      toast("Failed to copy to clipboard");
-      setCopyState("idle");
-    }
-  }
+  useEffect(() => {
+    if (downloadTick === 0) return;
+    setDownloaded(true);
+    setDownloadedKey((k) => k + 1);
+    if (downloadResetTimer.current) clearTimeout(downloadResetTimer.current);
+    downloadResetTimer.current = setTimeout(() => setDownloaded(false), 600);
+    return () => { if (downloadResetTimer.current) clearTimeout(downloadResetTimer.current); };
+  }, [downloadTick]);
+
+  useEffect(() => {
+    if (copyTick === 0) return;
+    setCopyState("copied");
+    if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+    copyResetTimer.current = setTimeout(() => setCopyState("idle"), 600);
+    return () => { if (copyResetTimer.current) clearTimeout(copyResetTimer.current); };
+  }, [copyTick]);
 
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
   if (!selectedVersion && !generating) return null;
@@ -211,7 +209,7 @@ export function PreviewActions() {
             render={
               <Button
                 variant="ghost"
-                onClick={copyToClipboard}
+                onClick={() => copy(selectedVersion!.id)}
                 size="icon-lg"
                 disabled={loading || !selectedVersion || copyState !== "idle"}
               >
@@ -248,20 +246,13 @@ export function PreviewActions() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
-            disabled={loading || !selectedVersion}
+            disabled={loading || !selectedVersion || downloaded}
             render={
               <Button
                 variant="ghost"
-                onClick={() => {
-                  if (!selectedVersion) return;
-                  download(selectedVersion.id);
-                  setDownloaded(true);
-                  setDownloadedKey((k) => k + 1);
-                  if (downloadResetTimer.current) clearTimeout(downloadResetTimer.current);
-                  downloadResetTimer.current = setTimeout(() => setDownloaded(false), 600);
-                }}
+                onClick={() => download(selectedVersion!.id)}
                 size="icon-lg"
-                disabled={loading || !selectedVersion}
+                disabled={loading || !selectedVersion || downloaded}
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {downloaded ? (

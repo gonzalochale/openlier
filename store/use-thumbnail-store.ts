@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
 
 export interface ThumbnailVersion {
   id: number;
@@ -27,7 +28,10 @@ interface ThumbnailState {
   setPendingPrompt: (prompt: string | null) => void;
   setCredits: (credits: number) => void;
   decrementCredits: () => void;
+  downloadTick: number;
   download: (id?: number) => void;
+  copyTick: number;
+  copy: (id?: number) => Promise<void>;
   clear: () => void;
   clearHistory: () => void;
 }
@@ -42,6 +46,8 @@ export const useThumbnailStore = create<ThumbnailState>()(
       error: null,
       pendingPrompt: null,
       credits: null,
+      downloadTick: 0,
+      copyTick: 0,
 
       addVersion: (versionData) =>
         set((state) => {
@@ -84,6 +90,23 @@ export const useThumbnailStore = create<ThumbnailState>()(
         a.href = `data:${version.mimeType};base64,${version.imageBase64}`;
         a.download = `thumbnail-v${version.id}.png`;
         a.click();
+        set((state) => ({ downloadTick: state.downloadTick + 1 }));
+      },
+
+      copy: async (id) => {
+        const { versions, selectedVersionId } = get();
+        const targetId = id ?? selectedVersionId;
+        const version = versions.find((v) => v.id === targetId);
+        if (!version) return;
+        if (typeof ClipboardItem === "undefined") return;
+        try {
+          const bytes = Uint8Array.from(atob(version.imageBase64), (c) => c.charCodeAt(0));
+          const blob = new Blob([bytes], { type: version.mimeType });
+          await navigator.clipboard.write([new ClipboardItem({ [version.mimeType]: blob })]);
+          set((state) => ({ copyTick: state.copyTick + 1 }));
+        } catch {
+          toast("Failed to copy to clipboard");
+        }
       },
 
       clear: () => set({ versions: [], selectedVersionId: null, error: null }),
