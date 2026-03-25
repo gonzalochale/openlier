@@ -31,10 +31,15 @@ export function UserMenu() {
 
   useCredits();
   const credits = useThumbnailStore((s) => s.credits);
+  const clear = useThumbnailStore((s) => s.clear);
 
   async function handleSignOut() {
-    await authClient.signOut();
-    router.refresh();
+    try {
+      await authClient.signOut();
+    } finally {
+      clear();
+      router.refresh();
+    }
   }
 
   const shouldReduceMotion = useReducedMotion();
