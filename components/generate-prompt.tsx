@@ -315,7 +315,7 @@ export function GeneratePrompt() {
         const fill =
           selectedVersionId !== null
             ? (selectedVersion?.rawPrompt ?? selectedVersion?.prompt)
-            : randomPlaceholder;
+            : textareaRef.current?.placeholder;
         if (fill) {
           e.preventDefault();
           handleValueChange(fill);
@@ -413,7 +413,6 @@ export function GeneratePrompt() {
       prompt,
       selectedVersionId,
       selectedVersion,
-      randomPlaceholder,
       pendingDeleteFile,
       pendingDeleteVideoId,
       removeFile,
