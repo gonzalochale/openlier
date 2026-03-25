@@ -80,7 +80,7 @@
   --channel-foreground: oklch(54.06% 0.14 253.17);
   --success: oklch(0.527 0.154 150.069);
 
-  --radius: 1rem;
+  --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
