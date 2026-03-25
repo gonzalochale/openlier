@@ -37,3 +37,7 @@ export function formatFileSize(bytes: number): string {
     ? `${(bytes / 1024).toFixed(1)} KB`
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+export function randomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}

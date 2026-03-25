@@ -26,7 +26,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { AuthModal } from "@/components/auth-modal";
 import { CreditsModal } from "@/components/credits-modal";
-import { resizeAndToBase64 } from "@/lib/utils";
+import { randomItem, resizeAndToBase64 } from "@/lib/utils";
 import { MAX_PROMPT_LENGTH, PROMPT_PLACEHOLDERS } from "@/lib/constants";
 import {
   type ChannelReference,
@@ -47,10 +47,7 @@ export function GeneratePrompt() {
   const shouldReduceMotion = useReducedMotion();
   const [prompt, setPrompt] = useState("");
   const lastSubmittedPromptRef = useRef<string | null>(null);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  useEffect(() => {
-    setPlaceholderIndex(Math.floor(Math.random() * PROMPT_PLACEHOLDERS.length));
-  }, []);
+  const [randomPlaceholder] = useState(() => randomItem(PROMPT_PLACEHOLDERS));
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [pendingDeleteFile, setPendingDeleteFile] = useState(false);
   const [pendingDeleteVideoId, setPendingDeleteVideoId] = useState<
@@ -318,7 +315,7 @@ export function GeneratePrompt() {
         const fill =
           selectedVersionId !== null
             ? (selectedVersion?.rawPrompt ?? selectedVersion?.prompt)
-            : PROMPT_PLACEHOLDERS[placeholderIndex];
+            : randomPlaceholder;
         if (fill) {
           e.preventDefault();
           handleValueChange(fill);
@@ -416,7 +413,7 @@ export function GeneratePrompt() {
       prompt,
       selectedVersionId,
       selectedVersion,
-      placeholderIndex,
+      randomPlaceholder,
       pendingDeleteFile,
       pendingDeleteVideoId,
       removeFile,
@@ -450,7 +447,7 @@ export function GeneratePrompt() {
       ? lastSubmittedPromptRef.current
       : selectedVersionId !== null
         ? (selectedVersion?.prompt ?? `Describe changes from v${selectedVersionId}…`)
-        : PROMPT_PLACEHOLDERS[placeholderIndex];
+        : randomPlaceholder;
 
   return (
     <div className="absolute bottom-0 sm:bottom-5 sm:px-5 w-full flex justify-center pointer-events-none">
@@ -598,6 +595,7 @@ export function GeneratePrompt() {
               <PromptInputTextarea
                 ref={textareaRef}
                 placeholder={placeholder}
+                suppressHydrationWarning
                 autoFocus
                 maxLength={MAX_PROMPT_LENGTH}
                 className="caret-foreground text-transparent"

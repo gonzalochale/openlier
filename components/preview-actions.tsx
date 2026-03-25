@@ -28,14 +28,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { TextShimmer } from "@/components//ui/text-shimmer";
 import { TextLoop } from "@/components//ui/text-loop";
 import { GENERATING_PHRASES } from "@/lib/constants";
+import { randomItem } from "@/lib/utils";
 
 export function PreviewActions() {
   const shouldReduceMotion = useReducedMotion();
   const phraseIndexRef = useRef(0);
-  const randomInterval = () => {
-    const steps = [2.5, 3, 3.5, 4, 4.5, 5];
-    return steps[Math.floor(Math.random() * steps.length)];
-  };
+  const randomInterval = () => randomItem([2.5, 3, 3.5, 4, 4.5, 5]);
   const [copyState, setCopyState] = useState<"idle" | "copying" | "copied">("idle");
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [downloadedKey, setDownloadedKey] = useState(0);
