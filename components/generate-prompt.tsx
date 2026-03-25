@@ -26,10 +26,11 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { AuthModal } from "@/components/auth-modal";
 import { CreditsModal } from "@/components/credits-modal";
-import { cn, resizeAndToBase64 } from "@/lib/utils";
-import { MAX_PROMPT_LENGTH } from "@/lib/constants";
+import { resizeAndToBase64 } from "@/lib/utils";
+import { MAX_PROMPT_LENGTH, PROMPT_PLACEHOLDERS } from "@/lib/constants";
 import {
   type ChannelReference,
+  isFoundVideoChip,
   stripVideoChips,
   youtubeRe,
   ytThumbnailUrl,
@@ -45,6 +46,11 @@ export function GeneratePrompt() {
   useThumbnailShortcuts();
   const shouldReduceMotion = useReducedMotion();
   const [prompt, setPrompt] = useState("");
+  const lastSubmittedPromptRef = useRef<string | null>(null);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  useEffect(() => {
+    setPlaceholderIndex(Math.floor(Math.random() * PROMPT_PLACEHOLDERS.length));
+  }, []);
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [pendingDeleteFile, setPendingDeleteFile] = useState(false);
   const [pendingDeleteVideoId, setPendingDeleteVideoId] = useState<
@@ -165,10 +171,8 @@ export function GeneratePrompt() {
         .trim();
 
       const videoRefs = videoChipsSnapshot
-        .filter((c): c is typeof c & { stage: "found" } => c.stage === "found")
-        .map((c) => ({
-          url: ytThumbnailUrl(c.videoId),
-        }));
+        .filter(isFoundVideoChip)
+        .map((c) => ({ url: ytThumbnailUrl(c.videoId) }));
 
       const entriesToSubmit = fileEntries;
       const foundChannels = [...channelWidgets.values()].filter(
@@ -180,6 +184,7 @@ export function GeneratePrompt() {
         handle: w.ref.handle,
       }));
 
+      lastSubmittedPromptRef.current = sendPrompt;
       setPrompt("");
       setFileEntries([]);
       clearAll();
@@ -235,10 +240,14 @@ export function GeneratePrompt() {
           mimeType: data.mimeType,
           enhancedPrompt: data.enhancedPrompt ?? null,
           prompt: sendPrompt,
+          rawPrompt: videoChipsSnapshot
+            .filter(isFoundVideoChip)
+            .reduce((acc, c) => acc.replaceAll(c.title, c.originalUrl), trimmed),
           createdAt: Date.now(),
         });
       } catch (err) {
         toast(err instanceof Error ? err.message : "Something went wrong");
+        setPrompt(sendPrompt);
         setLoading(false);
       } finally {
         requestAnimationFrame(() => textareaRef.current?.focus());
@@ -296,9 +305,27 @@ export function GeneratePrompt() {
     doSubmit(pendingPrompt);
   }, [sessionPending, session, pendingPrompt, setPendingPrompt, doSubmit]);
 
+  const selectedVersion = useMemo(
+    () => versions.find((v) => v.id === selectedVersionId),
+    [versions, selectedVersionId],
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (!textareaRef.current) return;
+
+      if (e.key === "Tab" && !prompt) {
+        const fill =
+          selectedVersionId !== null
+            ? (selectedVersion?.rawPrompt ?? selectedVersion?.prompt)
+            : PROMPT_PLACEHOLDERS[placeholderIndex];
+        if (fill) {
+          e.preventDefault();
+          handleValueChange(fill);
+          return;
+        }
+      }
+
       if (e.key !== "Backspace" && e.key !== "Delete") {
         if (pendingDeleteFile) setPendingDeleteFile(false);
         if (pendingDeleteVideoId) setPendingDeleteVideoId(null);
@@ -387,6 +414,9 @@ export function GeneratePrompt() {
       textSegments,
       fileEntries,
       prompt,
+      selectedVersionId,
+      selectedVersion,
+      placeholderIndex,
       pendingDeleteFile,
       pendingDeleteVideoId,
       removeFile,
@@ -416,9 +446,11 @@ export function GeneratePrompt() {
   }
 
   const placeholder =
-    selectedVersionId !== null
-      ? `Describe changes from v${selectedVersionId}…`
-      : "Create a thumbnail for my YouTube video with the title...";
+    loading && lastSubmittedPromptRef.current
+      ? lastSubmittedPromptRef.current
+      : selectedVersionId !== null
+        ? (selectedVersion?.prompt ?? `Describe changes from v${selectedVersionId}…`)
+        : PROMPT_PLACEHOLDERS[placeholderIndex];
 
   return (
     <div className="absolute bottom-0 sm:bottom-5 sm:px-5 w-full flex justify-center pointer-events-none">

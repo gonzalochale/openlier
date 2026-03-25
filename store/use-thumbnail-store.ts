@@ -6,6 +6,7 @@ export interface ThumbnailVersion {
   imageBase64: string;
   mimeType: string;
   prompt: string;
+  rawPrompt?: string;
   enhancedPrompt: string | null;
   createdAt: number;
 }

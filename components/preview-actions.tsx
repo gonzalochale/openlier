@@ -8,7 +8,7 @@ import {
   Copy,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
@@ -58,6 +58,14 @@ export function PreviewActions() {
       selectVersion: s.selectVersion,
     })),
   );
+
+  const shuffledPhrases = useMemo(
+    () => (!generating ? GENERATING_PHRASES : [...GENERATING_PHRASES].sort(() => Math.random() - 0.5)),
+    [generating],
+  );
+  useEffect(() => {
+    if (generating) phraseIndexRef.current = 0;
+  }, [generating]);
 
   async function copyToClipboard() {
     if (!selectedVersion || copyState === "copying") return;
@@ -114,9 +122,9 @@ export function PreviewActions() {
                     phraseIndexRef.current = i;
                   }}
                 >
-                  {GENERATING_PHRASES.map((phrase) => (
+                  {shuffledPhrases.map((phrase, i) => (
                     <TextShimmer
-                      key={phrase}
+                      key={i}
                       className="font-mono text-sm"
                       duration={1}
                     >

@@ -26,6 +26,12 @@ export type ChannelWidget =
   | { stage: "empty"; handle: string }
   | { stage: "error"; handle: string };
 
+export function isFoundVideoChip(
+  c: VideoChip,
+): c is VideoChip & { stage: "found" } {
+  return c.stage === "found";
+}
+
 export function ytThumbnailUrl(videoId: string): string {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }

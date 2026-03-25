@@ -37,6 +37,19 @@ export const GENERATING_PHRASES = [
   "Creating thumbnails that pop...",
   "Making your content stand out...",
 ];
+export const PROMPT_PLACEHOLDERS = [
+  "Create a thumbnail for my YouTube video with the title...",
+  "Design a thumbnail for a video about...",
+  "Make a thumbnail for a tutorial on...",
+  "Generate a thumbnail for a vlog about...",
+  "Create an eye-catching thumbnail for...",
+  "Design a thumbnail for a reaction video to...",
+  "Make a thumbnail for a gaming video about...",
+  "Create a thumbnail for a cooking video showing...",
+  "Generate a thumbnail for a tech review of...",
+  "Design a thumbnail for a travel video in...",
+];
+
 export const CREDIT_PLANS: Record<number, number> = {
   20: 25,
   100: 20,
