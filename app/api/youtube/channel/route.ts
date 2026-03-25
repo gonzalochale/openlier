@@ -82,8 +82,7 @@ export async function GET(request: Request) {
     return Response.json({ error: "Channel not found" }, { status: 404 });
   }
 
-  const uploadsPlaylistId =
-    channel.contentDetails?.relatedPlaylists?.uploads;
+  const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads;
   if (!uploadsPlaylistId) {
     return Response.json({ handle, thumbnails: [] });
   }
@@ -96,6 +95,9 @@ export async function GET(request: Request) {
   };
 
   if (playlistData.error) {
+    if (playlistRes.status === 404) {
+      return Response.json({ handle, thumbnails: [] });
+    }
     console.error(
       "[youtube/channel] playlistItems API error:",
       JSON.stringify(playlistData.error),
