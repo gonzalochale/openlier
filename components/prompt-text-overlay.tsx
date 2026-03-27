@@ -141,11 +141,7 @@ export function PromptTextOverlay({
                       {isFound ? chipTitle : p.text}
                     </TextScramble>
                   </HoverCardTrigger>
-                  <HoverCardContent
-                    className="w-52 p-2"
-                    side="top"
-                    align="start"
-                  >
+                  <HoverCardContent className="w-52" side="top" align="start">
                     {isFound ? (
                       <motion.img
                         src={ytThumbnailUrl(chipVideoId)}
@@ -201,11 +197,7 @@ export function PromptTextOverlay({
                   >
                     {p.text}
                   </HoverCardTrigger>
-                  <HoverCardContent
-                    className="w-52 p-2"
-                    side="top"
-                    align="start"
-                  >
+                  <HoverCardContent className="w-52" side="top" align="start">
                     <div className="flex flex-col gap-1.5 select-none">
                       {widgetFound.ref.thumbnails
                         .slice(0, 3)
@@ -276,7 +268,7 @@ export function PromptTextOverlay({
                 >
                   {p.text}
                 </HoverCardTrigger>
-                <HoverCardContent className="w-52 p-2" side="top" align="start">
+                <HoverCardContent className="w-52" side="top" align="start">
                   <div className="flex flex-col gap-1.5">
                     {Array.from({ length: 3 }).map((_, idx) => (
                       <Skeleton

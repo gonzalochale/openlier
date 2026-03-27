@@ -100,11 +100,7 @@ export function FileChipList({
                         <X className="size-3" />
                       </button>
                     </HoverCardTrigger>
-                    <HoverCardContent
-                      className="w-52 p-2"
-                      side="top"
-                      align="start"
-                    >
+                    <HoverCardContent className="w-52" side="top" align="start">
                       <motion.img
                         src={url}
                         alt={file.name}
