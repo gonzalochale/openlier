@@ -61,7 +61,7 @@ export function Preview() {
 
   return (
     <div className="w-full max-w-5xl flex-1 flex flex-col items-center justify-center">
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} mode="wait">
         {showPreview ? (
           <motion.div
             key="preview-area"
