@@ -34,7 +34,7 @@ export function UserMenu() {
     exit: shouldReduceMotion ? {} : { opacity: 0, y: -4 },
   };
 
-  const transition = { duration: 0.2, ease: [0.25, 1, 0.5, 1] };
+  const transition = { duration: 0.2, ease: [0.25, 1, 0.5, 1] as [number, number, number, number] };
 
   return (
     <AnimatePresence mode="popLayout" initial={false}>
