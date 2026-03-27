@@ -70,6 +70,8 @@ export function GeneratePrompt() {
     decrementCredits,
     openAuthModal,
     openCreditsModal,
+    promptFocusTick,
+    clearTick,
   } = useThumbnailStore(
     useShallow((s) => ({
       versions: s.versions,
@@ -85,8 +87,15 @@ export function GeneratePrompt() {
       decrementCredits: s.decrementCredits,
       openAuthModal: s.openAuthModal,
       openCreditsModal: s.openCreditsModal,
+      promptFocusTick: s.promptFocusTick,
+      clearTick: s.clearTick,
     })),
   );
+
+  useEffect(() => {
+    if (promptFocusTick === 0) return;
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, [promptFocusTick]);
 
   const { channelWidgets, videoChips, processValueChange, clearAll } =
     useYouTubeReferences({
@@ -96,6 +105,13 @@ export function GeneratePrompt() {
       isAuthenticated: !!session,
       onAuthRequired: () => openAuthModal(),
     });
+
+  useEffect(() => {
+    if (clearTick === 0) return;
+    setPrompt("");
+    setFileEntries([]);
+    clearAll();
+  }, [clearTick, clearAll]);
 
   function addFiles(newFiles: File[]) {
     if (!session) {
@@ -191,7 +207,8 @@ export function GeneratePrompt() {
       const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
       try {
-        let activeSessionId = sessionId;
+        let activeSessionId = versions.length > 0 ? sessionId : null;
+        const sessionCreatedHere = !activeSessionId;
         if (!activeSessionId) {
           const sessionRes = await fetch("/api/sessions", { method: "POST" });
           if (!sessionRes.ok) throw new Error("Failed to create session");
@@ -223,6 +240,9 @@ export function GeneratePrompt() {
         });
         const data = await res.json();
         if (res.status === 402) {
+          if (sessionCreatedHere) {
+            fetch(`/api/sessions/${activeSessionId}`, { method: "DELETE" }).catch(() => {});
+          }
           setLoading(false);
           openCreditsModal();
           return;

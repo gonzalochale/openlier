@@ -56,3 +56,22 @@ export async function GET(
 
   return Response.json({ generations });
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id: sessionId } = await params;
+
+  await pool.query(
+    `DELETE FROM thumbnail_session WHERE id = $1 AND user_id = $2`,
+    [sessionId, session.user.id],
+  );
+
+  return new Response(null, { status: 204 });
+}
