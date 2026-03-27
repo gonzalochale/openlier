@@ -1,10 +1,40 @@
 "use client";
 
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
 import { PreviewActions } from "@/components/preview-actions";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import type { ThumbnailVersion } from "@/store/use-thumbnail-store";
+
+function PreviewImage({
+  version,
+  shouldReduceMotion,
+  onLoaded,
+}: {
+  version: ThumbnailVersion;
+  shouldReduceMotion: boolean | null;
+  onLoaded: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <motion.img
+      src={version.imageUrl}
+      alt={`Thumbnail v${version.id}`}
+      className="absolute inset-0 w-full h-full object-cover select-none"
+      draggable={false}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: loaded ? 1 : 0 }}
+      exit={shouldReduceMotion ? {} : { opacity: 0 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      onLoad={() => {
+        setLoaded(true);
+        onLoaded();
+      }}
+    />
+  );
+}
 
 export function Preview() {
   const { versions, selectedVersionId, generating } = useThumbnailStore(
@@ -15,8 +45,11 @@ export function Preview() {
     })),
   );
 
+  const [loadedVersionId, setLoadedVersionId] = useState<number | null>(null);
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
   const shouldReduceMotion = useReducedMotion();
+  const imageLoaded = loadedVersionId === selectedVersion?.id;
+  const showSkeleton = generating || (!!selectedVersion && !imageLoaded);
 
   return (
     <div className="w-full max-w-5xl flex-1 flex flex-col items-center justify-center gap-2">
@@ -25,8 +58,8 @@ export function Preview() {
         className="relative w-full overflow-hidden rounded-md"
         style={{ aspectRatio: "16/9" }}
       >
-        <AnimatePresence mode="sync">
-          {generating ? (
+        <AnimatePresence>
+          {showSkeleton && (
             <motion.div
               key="skeleton"
               className="absolute inset-0"
@@ -37,19 +70,17 @@ export function Preview() {
             >
               <Skeleton className="w-full h-full" />
             </motion.div>
-          ) : selectedVersion ? (
-            <motion.img
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {selectedVersion && !generating && (
+            <PreviewImage
               key={`image-${selectedVersion.id}`}
-              src={selectedVersion.imageUrl}
-              alt={`Thumbnail v${selectedVersion.id}`}
-              className="absolute inset-0 w-full h-full object-cover select-none"
-              draggable={false}
-              initial={shouldReduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={shouldReduceMotion ? {} : { opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              version={selectedVersion}
+              shouldReduceMotion={shouldReduceMotion}
+              onLoaded={() => setLoadedVersionId(selectedVersion.id)}
             />
-          ) : null}
+          )}
         </AnimatePresence>
       </div>
     </div>
