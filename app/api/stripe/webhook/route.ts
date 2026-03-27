@@ -1,11 +1,11 @@
 import { pool } from "@/lib/db";
 import { grantCredits } from "@/lib/credits";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const rawBody = await req.text();
   const sig = req.headers.get("stripe-signature");
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     if (!userId) {
       console.error("Webhook: no user found for customer", stripeCustomerId);
-      return Response.json({ error: "User not found" }, { status: 500 });
+      return Response.json({ received: true });
     }
 
     try {

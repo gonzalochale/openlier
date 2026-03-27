@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { headers } from "next/headers";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { CREDIT_PLANS } from "@/lib/constants";
 
 export async function POST(req: Request) {
@@ -14,6 +14,10 @@ export async function POST(req: Request) {
   const credits = Number(body.credits);
 
   if (!Number.isInteger(credits) || credits < 1) {
+    return Response.json({ error: "Invalid credits amount" }, { status: 400 });
+  }
+
+  if (!CREDIT_PLANS[credits]) {
     return Response.json({ error: "Invalid credits amount" }, { status: 400 });
   }
 
@@ -30,7 +34,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     customer: stripeCustomerId,

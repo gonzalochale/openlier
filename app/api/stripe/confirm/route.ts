@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { grantCredits } from "@/lib/credits";
 import { headers } from "next/headers";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -14,8 +14,6 @@ export async function POST(req: Request) {
   if (!sessionId || typeof sessionId !== "string") {
     return Response.json({ error: "Missing sessionId" }, { status: 400 });
   }
-
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   const [checkoutSession, userResult] = await Promise.all([
     stripe.checkout.sessions.retrieve(sessionId),

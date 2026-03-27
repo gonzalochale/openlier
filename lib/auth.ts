@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { pool } from "@/lib/db";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 
 export const auth = betterAuth({
   database: pool,
@@ -32,7 +32,6 @@ export const auth = betterAuth({
         after: async (user) => {
           void (async () => {
             try {
-              const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
               const customer = await stripe.customers.create({
                 email: user.email,
                 name: user.name ?? undefined,

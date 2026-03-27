@@ -18,7 +18,10 @@ export function PaymentReturnHandler() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error("confirm failed");
+          return res.json();
+        })
         .then((data) => {
           if (data.credits !== undefined) setCredits(data.credits);
           toast("Credits added!");
