@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { authClient } from "@/lib/auth-client";
-import { useThumbnailStore } from "@/store/use-thumbnail-store";
-import { SignOutButton } from "@/components/sign-out-button";
-import { LoginButton } from "@/components/login-button";
+import { authClient } from "@/lib/auth/client";
+import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { LoginButton } from "@/components/auth/login-button";
 
 const SCRAMBLE_CHARS = "abcdefghijklmnopqrstuvwxyz";
 
@@ -86,8 +86,8 @@ function useScramble(target: string, shouldReduceMotion: boolean | null): string
 
 export function UserMenu() {
   const { data: session, isPending } = authClient.useSession();
-  const openCreditsModal = useThumbnailStore((s) => s.openCreditsModal);
-  const openInfoModal = useThumbnailStore((s) => s.openInfoModal);
+  const openCreditsModal = useThumbnailUIStore((s) => s.openCreditsModal);
+  const openInfoModal = useThumbnailUIStore((s) => s.openInfoModal);
   const shouldReduceMotion = useReducedMotion();
   const [emailVisible, setEmailVisible] = useState(false);
   const user = session?.user;

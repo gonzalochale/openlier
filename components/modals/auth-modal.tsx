@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { GitHubSignInButton } from "@/components/github-sign-in-button";
+import { GitHubSignInButton } from "@/components/auth/github-sign-in-button";
 
 interface AuthModalProps {
   open: boolean;

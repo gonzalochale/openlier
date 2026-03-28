@@ -6,19 +6,20 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
+import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
 import NumberFlow from "@number-flow/react";
 import { Info } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Skeleton } from "./ui/skeleton";
-import { LoginButton } from "@/components/login-button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LoginButton } from "@/components/auth/login-button";
 
 export function UserHeader() {
   const { data: session, isPending } = authClient.useSession();
   const credits = useThumbnailStore((s) => s.credits);
-  const openCreditsModal = useThumbnailStore((s) => s.openCreditsModal);
-  const openInfoModal = useThumbnailStore((s) => s.openInfoModal);
+  const openCreditsModal = useThumbnailUIStore((s) => s.openCreditsModal);
+  const openInfoModal = useThumbnailUIStore((s) => s.openInfoModal);
 
   return (
     <header className="w-full flex items-center justify-between gap-2">

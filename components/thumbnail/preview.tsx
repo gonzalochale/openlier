@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
-import { PreviewActions } from "@/components/preview-actions";
+import { PreviewActions } from "@/components/thumbnail/preview-actions";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { ThumbnailVersion } from "@/store/use-thumbnail-store";
 

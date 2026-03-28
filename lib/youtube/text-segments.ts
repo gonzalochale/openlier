@@ -1,4 +1,4 @@
-import { type ChannelWidget, type VideoChip, youtubeRe } from "@/lib/youtube";
+import { type ChannelWidget, type VideoChip, youtubeRe } from "./utils";
 
 export type TextSegment =
   | { type: "plain"; text: string }

@@ -1,10 +1,9 @@
 import { generateText, Output } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
-import { whitePng } from "@/lib/white-png";
-import { auth } from "@/lib/auth";
-import { deductCredit, refundCredit } from "@/lib/credits";
-import { headers } from "next/headers";
+import { whitePng } from "@/lib/generation/white-png";
+import { deductCredit, refundCredit } from "@/lib/stripe/credits";
+import { requireAuth } from "@/lib/auth/require-auth";
 import {
   CREATE_IMAGES,
   MAX_FILES,
@@ -18,12 +17,12 @@ import {
   type ChannelRef,
   type PreviousVersion,
   type VideoRef,
-} from "@/lib/build-image-prompt";
+} from "@/lib/generation/build-prompt";
 import {
   fetchPreviousVersion,
   persistGeneration,
-} from "@/lib/generation-service";
-import { buildGeminiContents, callGeminiImage } from "@/lib/gemini-image";
+} from "@/lib/generation/service";
+import { buildGeminiContents, callGeminiImage } from "@/lib/generation/gemini";
 import { seedFromUUID } from "@/lib/utils";
 
 const safetySchema = z.object({
@@ -33,10 +32,8 @@ const safetySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const {

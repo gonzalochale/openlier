@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { pool } from "@/lib/db";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe/client";
 
 export const auth = betterAuth({
   database: pool,

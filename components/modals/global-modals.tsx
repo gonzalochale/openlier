@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { AuthModal } from "@/components/auth-modal";
-import { CreditsModal } from "@/components/credits-modal";
-import { InfoModal } from "@/components/info-modal";
+import { AuthModal } from "@/components/modals/auth-modal";
+import { CreditsModal } from "@/components/modals/credits-modal";
+import { InfoModal } from "@/components/modals/info-modal";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
+import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
 import { useShallow } from "zustand/react/shallow";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 
 export function GlobalModals() {
   const { data: session } = authClient.useSession();
@@ -29,7 +30,7 @@ export function GlobalModals() {
     return () => window.removeEventListener("focus", onFocus);
   }, [setCredits]);
   const { authModalOpen, closeAuthModal, creditsModalOpen, closeCreditsModal, infoModalOpen, closeInfoModal } =
-    useThumbnailStore(
+    useThumbnailUIStore(
       useShallow((s) => ({
         authModalOpen: s.authModalOpen,
         closeAuthModal: s.closeAuthModal,

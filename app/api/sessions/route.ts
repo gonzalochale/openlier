@@ -1,13 +1,10 @@
-import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { imageProxyUrl } from "@/lib/s3";
-import { headers } from "next/headers";
+import { imageProxyUrl } from "@/lib/storage/s3";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function POST() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const result = await pool.query<{ id: string }>(
     `INSERT INTO thumbnail_session (user_id) VALUES ($1) RETURNING id`,
@@ -18,10 +15,8 @@ export async function POST() {
 }
 
 export async function GET() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const result = await pool.query<{
     id: string;

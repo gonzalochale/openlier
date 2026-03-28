@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUp, Paperclip } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
+import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
 import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import {
@@ -18,7 +19,7 @@ import {
   FileUploadTrigger,
   FileUploadContent,
 } from "@/components/file-upload";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { randomItem, resizeAndToBase64 } from "@/lib/utils";
 import { MAX_PROMPT_LENGTH, PROMPT_PLACEHOLDERS } from "@/lib/constants";
 import {
@@ -27,11 +28,11 @@ import {
   stripVideoChips,
   youtubeRe,
   ytThumbnailUrl,
-} from "@/lib/youtube";
-import { getTextSegments } from "@/lib/text-segments";
+} from "@/lib/youtube/utils";
+import { getTextSegments } from "@/lib/youtube/text-segments";
 import { useThumbnailShortcuts } from "@/hooks/use-thumbnail-shortcuts";
 import { useYouTubeReferences } from "@/hooks/use-youtube-references";
-import { PromptTextOverlay } from "@/components/prompt-text-overlay";
+import { PromptTextOverlay } from "@/components/youtube/prompt-text-overlay";
 import { FileChipList, type FileEntry } from "@/components/file-chip-list";
 
 export function GeneratePrompt() {
@@ -68,9 +69,6 @@ export function GeneratePrompt() {
     pendingPrompt,
     setPendingPrompt,
     decrementCredits,
-    openAuthModal,
-    openCreditsModal,
-    promptFocusTick,
     clearTick,
   } = useThumbnailStore(
     useShallow((s) => ({
@@ -85,12 +83,12 @@ export function GeneratePrompt() {
       pendingPrompt: s.pendingPrompt,
       setPendingPrompt: s.setPendingPrompt,
       decrementCredits: s.decrementCredits,
-      openAuthModal: s.openAuthModal,
-      openCreditsModal: s.openCreditsModal,
-      promptFocusTick: s.promptFocusTick,
       clearTick: s.clearTick,
     })),
   );
+  const openAuthModal = useThumbnailUIStore((s) => s.openAuthModal);
+  const openCreditsModal = useThumbnailUIStore((s) => s.openCreditsModal);
+  const promptFocusTick = useThumbnailUIStore((s) => s.promptFocusTick);
 
   useEffect(() => {
     if (promptFocusTick === 0) return;

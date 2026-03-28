@@ -6,9 +6,9 @@ import {
   type ChannelWidget,
   type VideoChip,
   ytThumbnailUrl,
-} from "@/lib/youtube";
-import { type TextSegment } from "@/lib/text-segments";
-import { MentionStatusChip } from "@/components/mention-status-chip";
+} from "@/lib/youtube/utils";
+import { type TextSegment } from "@/lib/youtube/text-segments";
+import { MentionStatusChip } from "@/components/youtube/mention-status-chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   HoverCard,

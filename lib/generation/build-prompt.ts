@@ -11,7 +11,7 @@ import type {
   PreviousVersion,
   ReferenceImage,
   VideoRef,
-} from "@/lib/generation-types";
+} from "./types";
 
 export type { ChannelRef, PreviousVersion, ReferenceImage, VideoRef };
 

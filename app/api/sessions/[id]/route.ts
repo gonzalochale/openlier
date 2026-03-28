@@ -1,16 +1,13 @@
-import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { imageProxyUrl } from "@/lib/s3";
-import { headers } from "next/headers";
+import { imageProxyUrl } from "@/lib/storage/s3";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: sessionId } = await params;
 
@@ -61,10 +58,8 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: sessionId } = await params;
 

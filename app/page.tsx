@@ -1,12 +1,12 @@
 import { cookies } from "next/headers";
-import { Preview } from "@/components/preview";
-import { GeneratePrompt } from "@/components/generate-prompt";
-import { UserHeader } from "@/components/user-header";
-import { PaymentReturnHandler } from "@/components/payment-return-handler";
+import { Preview } from "@/components/thumbnail/preview";
+import { GeneratePrompt } from "@/components/prompt/generate-prompt";
+import { UserHeader } from "@/components/auth/user-header";
+import { PaymentReturnHandler } from "@/components/payments/payment-return-handler";
 import { KonamiCode } from "@/components/konami-code";
-import { SessionsSidebar } from "@/components/sessions-sidebar";
+import { SessionsSidebar } from "@/components/sessions/sessions-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { GlobalModals } from "@/components/global-modals";
+import { GlobalModals } from "@/components/modals/global-modals";
 
 export default async function Home() {
   const cookieStore = await cookies();

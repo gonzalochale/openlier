@@ -1,14 +1,11 @@
-import { auth } from "@/lib/auth";
 import { pool } from "@/lib/db";
-import { grantCredits } from "@/lib/credits";
-import { headers } from "next/headers";
-import { stripe } from "@/lib/stripe";
+import { grantCredits } from "@/lib/stripe/credits";
+import { stripe } from "@/lib/stripe/client";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 export async function POST(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { sessionId } = await req.json();
   if (!sessionId || typeof sessionId !== "string") {

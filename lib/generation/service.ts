@@ -1,9 +1,9 @@
 import { pool } from "@/lib/db";
-import { generationKey, getObjectBase64, uploadImage } from "@/lib/s3";
+import { generationKey, getObjectBase64, uploadImage } from "@/lib/storage/s3";
 import type {
   PersistGenerationParams,
   PreviousVersion,
-} from "@/lib/generation-types";
+} from "./types";
 
 export async function persistGeneration(params: PersistGenerationParams) {
   const {

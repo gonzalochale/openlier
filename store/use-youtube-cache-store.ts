@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ChannelReference, VideoData } from "@/lib/youtube";
+import type { ChannelReference, VideoData } from "@/lib/youtube/utils";
 
 const TTL_MS = 86_400_000; // 24 hours
 

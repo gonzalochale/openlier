@@ -41,17 +41,6 @@ interface ThumbnailState {
   copyTick: number;
   copying: boolean;
   copy: (id?: number) => Promise<void>;
-  authModalOpen: boolean;
-  creditsModalOpen: boolean;
-  infoModalOpen: boolean;
-  openAuthModal: () => void;
-  closeAuthModal: () => void;
-  openCreditsModal: () => void;
-  closeCreditsModal: () => void;
-  openInfoModal: () => void;
-  closeInfoModal: () => void;
-  promptFocusTick: number;
-  focusPrompt: () => void;
   clearTick: number;
   clear: () => void;
   clearHistory: () => void;
@@ -72,19 +61,7 @@ export const useThumbnailStore = create<ThumbnailState>()(
       downloading: false,
       copyTick: 0,
       copying: false,
-      authModalOpen: false,
-      creditsModalOpen: false,
-      infoModalOpen: false,
-      promptFocusTick: 0,
       clearTick: 0,
-
-      openAuthModal: () => set({ authModalOpen: true }),
-      closeAuthModal: () => set({ authModalOpen: false }),
-      openCreditsModal: () => set({ creditsModalOpen: true }),
-      closeCreditsModal: () => set({ creditsModalOpen: false }),
-      openInfoModal: () => set({ infoModalOpen: true }),
-      closeInfoModal: () => set({ infoModalOpen: false }),
-      focusPrompt: () => set((s) => ({ promptFocusTick: s.promptFocusTick + 1 })),
 
       addVersion: (versionData) =>
         set((state) => {

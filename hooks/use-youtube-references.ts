@@ -8,7 +8,7 @@ import {
   countChannelThumbnails,
   extractYouTubeMatches,
   truncateTitle,
-} from "@/lib/youtube";
+} from "@/lib/youtube/utils";
 import {
   DEBOUNCE_MS,
   MAX_FILES,

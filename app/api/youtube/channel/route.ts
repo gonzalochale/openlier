@@ -1,6 +1,5 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { ytThumbnailUrl } from "@/lib/youtube";
+import { ytThumbnailUrl } from "@/lib/youtube/utils";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 interface YTChannelResponse {
   items?: Array<{
@@ -39,9 +38,8 @@ function isoToSeconds(iso: string): number {
 }
 
 export async function GET(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session)
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAuth();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const handle = searchParams.get("handle")?.replace(/^@/, "");

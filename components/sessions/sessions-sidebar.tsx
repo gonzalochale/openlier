@@ -12,10 +12,11 @@ import {
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserMenu } from "@/components/user-menu";
-import { SessionItem } from "@/components/session-item";
-import { authClient } from "@/lib/auth-client";
+import { UserMenu } from "@/components/auth/user-menu";
+import { SessionItem } from "@/components/sessions/session-item";
+import { authClient } from "@/lib/auth/client";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
+import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
 import { useSessions } from "@/hooks/use-sessions";
 import {
   animate,
@@ -28,10 +29,10 @@ import type { AnimationPlaybackControls } from "motion/react";
 export function SessionsSidebar() {
   const { data: session, isPending: authPending } = authClient.useSession();
   const { isMobile, setOpenMobile } = useSidebar();
-  const openAuthModal = useThumbnailStore((s) => s.openAuthModal);
+  const openAuthModal = useThumbnailUIStore((s) => s.openAuthModal);
+  const focusPrompt = useThumbnailUIStore((s) => s.focusPrompt);
   const clear = useThumbnailStore((s) => s.clear);
   const clearHistory = useThumbnailStore((s) => s.clearHistory);
-  const focusPrompt = useThumbnailStore((s) => s.focusPrompt);
   const firstGenerationId = useThumbnailStore(
     (s) => s.versions[0]?.generationId,
   );

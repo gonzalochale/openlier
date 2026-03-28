@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useKonamiCode } from "@/hooks/use-konami-code";
 

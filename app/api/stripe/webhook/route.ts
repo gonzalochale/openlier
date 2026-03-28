@@ -1,7 +1,7 @@
 import { pool } from "@/lib/db";
-import { grantCredits } from "@/lib/credits";
+import { grantCredits } from "@/lib/stripe/credits";
 import type Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe/client";
 
 export const dynamic = "force-dynamic";
 

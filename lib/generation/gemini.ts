@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { IMAGE_MODEL } from "@/lib/constants";
-import type { PreviousVersion, ReferenceImage } from "@/lib/generation-types";
+import type { PreviousVersion, ReferenceImage } from "./types";
 
 interface GeminiPart {
   text?: string;
