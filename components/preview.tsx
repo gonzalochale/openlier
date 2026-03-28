@@ -22,7 +22,7 @@ function PreviewImage({
     <motion.img
       src={version.imageUrl}
       alt={`Thumbnail v${version.id}`}
-      className="absolute inset-0 w-full h-full object-cover select-none"
+      className="absolute inset-0 w-full h-full object-cover select-none bg-accent"
       draggable={false}
       initial={shouldReduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: loaded ? 1 : 0 }}
@@ -74,7 +74,7 @@ export function Preview() {
           >
             <PreviewActions />
             <div
-              className="relative w-full overflow-hidden rounded-md"
+              className="relative w-full overflow-hidden rounded-md bg-accent"
               style={{ aspectRatio: "16/9" }}
             >
               <AnimatePresence>
