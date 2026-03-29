@@ -81,7 +81,8 @@ The auth `user` table is managed by Better Auth.
 pnpm dev
 ```
 
-Open http://localhost:3000 and sign in with GitHub.
+Open [Open Openlier locally](http://localhost:3000) and sign in with GitHub.
+and sign in with GitHub.
 
 ## Scripts
 
