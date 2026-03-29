@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { authClient } from "@/lib/auth/client";
 import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -30,7 +30,10 @@ function maskEmail(email: string) {
   return `${local[0]}${"•".repeat(Math.max(local.length - 1, 3))}@${domain}`;
 }
 
-function useScramble(target: string, shouldReduceMotion: boolean | null): string {
+function useScramble(
+  target: string,
+  shouldReduceMotion: boolean | null,
+): string {
   const [displayed, setDisplayed] = useState(target);
   const prevRef = useRef(target);
   const rafRef = useRef(0);
@@ -111,7 +114,7 @@ export function UserMenu() {
   return (
     <AnimatePresence mode="popLayout" initial={false}>
       {isPending ? null : !user ? (
-        <motion.div
+        <m.div
           key="logged-out"
           variants={variants}
           initial="initial"
@@ -129,9 +132,9 @@ export function UserMenu() {
             </span>
           </div>
           <LoginButton className="w-full" />
-        </motion.div>
+        </m.div>
       ) : (
-        <motion.div
+        <m.div
           key="logged-in"
           variants={variants}
           initial="initial"
@@ -198,10 +201,12 @@ export function UserMenu() {
                             e.stopPropagation();
                             setEmailVisible((v) => !v);
                           }}
-                          aria-label={emailVisible ? "Hide email" : "Show email"}
+                          aria-label={
+                            emailVisible ? "Hide email" : "Show email"
+                          }
                         >
                           <AnimatePresence mode="popLayout" initial={false}>
-                            <motion.span
+                            <m.span
                               key={emailVisible ? "icon-hide" : "icon-show"}
                               initial={
                                 shouldReduceMotion
@@ -225,7 +230,7 @@ export function UserMenu() {
                               ) : (
                                 <Eye size={12} />
                               )}
-                            </motion.span>
+                            </m.span>
                           </AnimatePresence>
                         </button>
                       </div>
@@ -248,7 +253,7 @@ export function UserMenu() {
               </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

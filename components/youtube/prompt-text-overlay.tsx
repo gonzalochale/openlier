@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   type ChannelWidget,
@@ -92,14 +92,15 @@ export function PromptTextOverlay({
     >
       {displayedSegments
         ? displayedSegments.map((p: TextSegment, i: number) => {
-            if (p.type === "plain") return <span key={i}>{p.text}</span>;
+            if (p.type === "plain")
+              return <span key={`plain-${i}`}>{p.text}</span>;
 
             if (p.type === "youtube-url") {
               const chip = videoChips.find((c) => c.videoId === p.videoId);
               if (chip?.stage === "error") {
                 return (
                   <MentionStatusChip
-                    key={i}
+                    key={`video-error:${p.videoId}`}
                     markClass="bg-destructive/15 text-destructive"
                     textClass="text-destructive"
                     message="Video not found"
@@ -114,7 +115,7 @@ export function PromptTextOverlay({
               const key = `video:${p.videoId}`;
               return (
                 <HoverCard
-                  key={i}
+                  key={key}
                   open={openKey === key}
                   onOpenChange={(o) => handleSegmentOpenChange(key, o)}
                 >
@@ -143,7 +144,7 @@ export function PromptTextOverlay({
                   </HoverCardTrigger>
                   <HoverCardContent className="w-52" side="top" align="start">
                     {isFound ? (
-                      <motion.img
+                      <m.img
                         src={ytThumbnailUrl(chipVideoId)}
                         alt={chipTitle}
                         className="aspect-video w-full rounded-sm object-cover"
@@ -167,7 +168,7 @@ export function PromptTextOverlay({
             if (p.type === "duplicate-channel") {
               return (
                 <MentionStatusChip
-                  key={i}
+                  key={`dup-channel:${p.handle}`}
                   markClass="bg-destructive/15 text-destructive"
                   textClass="text-destructive"
                   message="Can't tag the same channel twice"
@@ -184,7 +185,7 @@ export function PromptTextOverlay({
             if (widgetFound) {
               return (
                 <HoverCard
-                  key={i}
+                  key={key}
                   open={openKey === key}
                   onOpenChange={(o) => handleSegmentOpenChange(key, o)}
                 >
@@ -202,7 +203,7 @@ export function PromptTextOverlay({
                       {widgetFound.ref.thumbnails
                         .slice(0, 3)
                         .map((thumb, j) => (
-                          <motion.img
+                          <m.img
                             key={thumb.videoId}
                             src={thumb.url}
                             alt={thumb.title}
@@ -230,7 +231,7 @@ export function PromptTextOverlay({
             if (widget?.stage === "error") {
               return (
                 <MentionStatusChip
-                  key={i}
+                  key={`channel-error:${p.handle}`}
                   markClass="bg-destructive/15 text-destructive"
                   textClass="text-destructive"
                   message="Channel not found"
@@ -243,7 +244,7 @@ export function PromptTextOverlay({
             if (widget?.stage === "empty") {
               return (
                 <MentionStatusChip
-                  key={i}
+                  key={`channel-empty:${p.handle}`}
                   markClass="bg-destructive/15 text-destructive"
                   textClass="text-destructive"
                   message="No videos found"
@@ -255,7 +256,7 @@ export function PromptTextOverlay({
 
             return (
               <HoverCard
-                key={i}
+                key={key}
                 open={openKey === key}
                 onOpenChange={(o) => handleSegmentOpenChange(key, o)}
               >

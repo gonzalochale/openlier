@@ -1,6 +1,6 @@
 "use client";
 import { type JSX, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion, MotionProps } from "motion/react";
+import { m, MotionProps } from "motion/react";
 
 export type TextScrambleProps = {
   children: string;
@@ -27,9 +27,7 @@ export function TextScramble({
   onScrambleComplete,
   ...props
 }: TextScrambleProps) {
-  const MotionComponent = motion.create(
-    Component as keyof JSX.IntrinsicElements,
-  );
+  const MotionComponent = m.create(Component as keyof JSX.IntrinsicElements);
   const [scrambledText, setScrambledText] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 

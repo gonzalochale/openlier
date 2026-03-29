@@ -4,7 +4,7 @@ import * as React from "react";
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -221,7 +221,7 @@ function Sidebar({
       data-slot="sidebar"
     >
       {/* This is what handles the sidebar gap on desktop */}
-      <motion.div
+      <m.div
         data-slot="sidebar-gap"
         animate={{
           width:
@@ -242,7 +242,7 @@ function Sidebar({
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
         )}
       />
-      <motion.div
+      <m.div
         data-slot="sidebar-container"
         data-side={side}
         animate={{
@@ -275,7 +275,7 @@ function Sidebar({
         >
           {children}
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

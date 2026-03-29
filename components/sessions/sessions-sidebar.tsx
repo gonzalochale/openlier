@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -18,12 +19,7 @@ import { authClient } from "@/lib/auth/client";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useThumbnailUIStore } from "@/store/use-thumbnail-ui-store";
 import { useSessions } from "@/hooks/use-sessions";
-import {
-  animate,
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { animate, AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { AnimationPlaybackControls } from "motion/react";
 
 export function SessionsSidebar() {
@@ -36,6 +32,7 @@ export function SessionsSidebar() {
   const firstGenerationId = useThumbnailStore(
     (s) => s.versions[0]?.generationId,
   );
+  const router = useRouter();
   const { sessions, refresh } = useSessions();
   const prevFirstIdRef = useRef<string | null>(null);
   const [newSessionId, setNewSessionId] = useState<string | null>(null);
@@ -74,6 +71,7 @@ export function SessionsSidebar() {
     if (!session) return openAuthModal();
     clear();
     focusPrompt();
+    router.push("/");
     if (isMobile) setOpenMobile(false);
   }
 
@@ -115,7 +113,7 @@ export function SessionsSidebar() {
         </div>
         <AnimatePresence initial={false}>
           {session?.user && (
-            <motion.div
+            <m.div
               key="sessions-list"
               initial={
                 shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -6 }
@@ -126,7 +124,7 @@ export function SessionsSidebar() {
               className="flex-1 min-h-0 overflow-hidden"
             >
               <ScrollArea className="h-full">
-                <motion.div layout className="px-2 pb-2 flex flex-col gap-0.5">
+                <m.div layout className="px-2 pb-2 flex flex-col gap-0.5">
                   <AnimatePresence initial={false} mode="popLayout">
                     {sessions.map((s) => (
                       <SessionItem
@@ -136,9 +134,9 @@ export function SessionsSidebar() {
                       />
                     ))}
                   </AnimatePresence>
-                </motion.div>
+                </m.div>
               </ScrollArea>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </SidebarContent>

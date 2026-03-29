@@ -7,8 +7,9 @@ import {
   ChevronRight,
   Copy,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
@@ -79,18 +80,6 @@ export function PreviewActions() {
   }, [generating]);
 
   useEffect(() => {
-    const version = useThumbnailStore
-      .getState()
-      .versions.find((v) => v.id === selectedVersionId);
-    if (!version) return;
-    const controller = new AbortController();
-    fetch(`${version.imageUrl}?blob=1`, { signal: controller.signal }).catch(
-      () => {},
-    );
-    return () => controller.abort();
-  }, [selectedVersionId]);
-
-  useEffect(() => {
     if (downloadTick === 0) return;
     setDownloaded(true);
     setDownloadedKey((k) => k + 1);
@@ -130,7 +119,7 @@ export function PreviewActions() {
       <div className="relative overflow-hidden">
         <AnimatePresence mode="wait">
           {generating ? (
-            <motion.div
+            <m.div
               key="loading"
               variants={slotVariants}
               initial="initial"
@@ -165,9 +154,9 @@ export function PreviewActions() {
                   ))}
                 </TextLoop>
               )}
-            </motion.div>
+            </m.div>
           ) : selectedVersion ? (
-            <motion.div
+            <m.div
               key={`version-${selectedVersion.id}`}
               variants={slotVariants}
               initial="initial"
@@ -226,11 +215,14 @@ export function PreviewActions() {
                             <span className="font-mono text-xs tabular-nums">
                               v{v.id}
                             </span>
-                            <img
+                            <Image
                               src={v.imageUrl}
                               alt={`v${v.id}`}
+                              width={64}
+                              height={36}
                               className="aspect-video w-16 shrink-0 rounded-sm object-cover select-none bg-accent"
                               draggable={false}
+                              unoptimized
                             />
                           </DropdownMenuItem>
                         ))}
@@ -247,7 +239,7 @@ export function PreviewActions() {
                   <ChevronRight size={16} />
                 </Button>
               </div>
-            </motion.div>
+            </m.div>
           ) : null}
         </AnimatePresence>
       </div>
@@ -264,7 +256,7 @@ export function PreviewActions() {
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {copyState === "copied" ? (
-                    <motion.span
+                    <m.span
                       key="check"
                       initial={
                         shouldReduceMotion
@@ -280,9 +272,9 @@ export function PreviewActions() {
                       transition={{ duration: 0.15, ease: [0.25, 1, 0.5, 1] }}
                     >
                       <Check size={16} />
-                    </motion.span>
+                    </m.span>
                   ) : (
-                    <motion.span
+                    <m.span
                       key="copy"
                       initial={
                         shouldReduceMotion
@@ -298,7 +290,7 @@ export function PreviewActions() {
                       transition={{ duration: 0.15, ease: [0.25, 1, 0.5, 1] }}
                     >
                       <Copy size={16} />
-                    </motion.span>
+                    </m.span>
                   )}
                 </AnimatePresence>
               </Button>
@@ -321,7 +313,7 @@ export function PreviewActions() {
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {downloaded ? (
-                    <motion.span
+                    <m.span
                       key={`check-${downloadedKey}`}
                       initial={
                         shouldReduceMotion
@@ -337,9 +329,9 @@ export function PreviewActions() {
                       transition={{ duration: 0.15, ease: [0.25, 1, 0.5, 1] }}
                     >
                       <Check size={16} />
-                    </motion.span>
+                    </m.span>
                   ) : (
-                    <motion.span
+                    <m.span
                       key="arrow"
                       initial={
                         shouldReduceMotion
@@ -355,7 +347,7 @@ export function PreviewActions() {
                       transition={{ duration: 0.15, ease: [0.25, 1, 0.5, 1] }}
                     >
                       <ArrowDown size={18} />
-                    </motion.span>
+                    </m.span>
                   )}
                 </AnimatePresence>
               </Button>

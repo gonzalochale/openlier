@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -31,7 +31,7 @@ export function FileChipList({
   return (
     <AnimatePresence initial={false}>
       {fileEntries.length > 0 && (
-        <motion.div
+        <m.div
           key="chips"
           initial={
             shouldReduceMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
@@ -46,7 +46,7 @@ export function FileChipList({
           <div className="flex flex-wrap gap-2 px-2 pt-2 pb-1">
             <AnimatePresence mode="popLayout">
               {fileEntries.map(({ file, url }, index) => (
-                <motion.div
+                <m.div
                   key={url}
                   initial={
                     shouldReduceMotion
@@ -101,7 +101,7 @@ export function FileChipList({
                       </button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-52" side="top" align="start">
-                      <motion.img
+                      <m.img
                         src={url}
                         alt={file.name}
                         className="aspect-video w-full rounded-sm object-cover"
@@ -119,11 +119,11 @@ export function FileChipList({
                       />
                     </HoverCardContent>
                   </HoverCard>
-                </motion.div>
+                </m.div>
               ))}
             </AnimatePresence>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

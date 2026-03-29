@@ -92,6 +92,7 @@ function PromptInput({
         }}
       >
         <div
+          role="presentation"
           onClick={handleClick}
           className={cn(
             "border-input cursor-text rounded-t-2xl sm:rounded-2xl border p-2 bg-card",

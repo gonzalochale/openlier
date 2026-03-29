@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import {
-  motion,
+  m,
   AnimatePresence,
   Transition,
   Variants,
@@ -75,7 +75,7 @@ export function TextLoop({
   return (
     <div className={cn("relative inline-block whitespace-nowrap", className)}>
       <AnimatePresence mode={mode} initial={presenceInitial}>
-        <motion.div
+        <m.div
           key={currentIndex}
           initial="initial"
           animate="animate"
@@ -84,7 +84,7 @@ export function TextLoop({
           variants={variants || motionVariants}
         >
           {items[currentIndex]}
-        </motion.div>
+        </m.div>
       </AnimatePresence>
     </div>
   );

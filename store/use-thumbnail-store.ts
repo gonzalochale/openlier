@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { toast } from "sonner";
 
 export interface ThumbnailVersion {
@@ -175,9 +175,9 @@ export const useThumbnailStore = create<ThumbnailState>()(
     }),
     {
       name: "thumbnail-store",
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         pendingPrompt: state.pendingPrompt,
-        sessionId: state.sessionId,
       }),
     },
   ),

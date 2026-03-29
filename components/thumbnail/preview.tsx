@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
 import { useShallow } from "zustand/react/shallow";
 import { PreviewActions } from "@/components/thumbnail/preview-actions";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { ThumbnailVersion } from "@/store/use-thumbnail-store";
 
 function PreviewImage({
@@ -19,7 +19,7 @@ function PreviewImage({
 }) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <motion.img
+    <m.img
       src={version.imageUrl}
       alt={`Thumbnail v${version.id}`}
       className="absolute inset-0 w-full h-full object-cover select-none bg-accent"
@@ -63,7 +63,7 @@ export function Preview() {
     <div className="w-full max-w-5xl flex-1 flex flex-col items-center justify-center">
       <AnimatePresence initial={false} mode="wait">
         {showPreview ? (
-          <motion.div
+          <m.div
             key="preview-area"
             className="w-full flex flex-col gap-2"
             variants={pageVariants}
@@ -79,7 +79,7 @@ export function Preview() {
             >
               <AnimatePresence>
                 {showSkeleton && (
-                  <motion.div
+                  <m.div
                     key="skeleton"
                     className="absolute inset-0"
                     initial={shouldReduceMotion ? false : { opacity: 0 }}
@@ -88,7 +88,7 @@ export function Preview() {
                     transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
                   >
                     <Skeleton className="w-full h-full" />
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
               <AnimatePresence>
@@ -102,9 +102,9 @@ export function Preview() {
                 )}
               </AnimatePresence>
             </div>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="empty"
             className="select-none text-center"
             variants={pageVariants}
@@ -116,7 +116,7 @@ export function Preview() {
             <h2 className="text-2xl font-medium tracking-tight text-balance">
               What are you creating today?
             </h2>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

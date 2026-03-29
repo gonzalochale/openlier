@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useParams, useRouter } from "next/navigation";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { ArrowUp, Paperclip } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
@@ -37,6 +38,8 @@ import { FileChipList, type FileEntry } from "@/components/file-chip-list";
 
 export function GeneratePrompt() {
   useThumbnailShortcuts();
+  const router = useRouter();
+  const params = useParams<{ sessionId?: string }>();
   const shouldReduceMotion = useReducedMotion();
   const [prompt, setPrompt] = useState("");
   const lastSubmittedPromptRef = useRef<string | null>(null);
@@ -66,6 +69,7 @@ export function GeneratePrompt() {
     startGenerating,
     addVersion,
     setSessionId,
+    selectVersion,
     pendingPrompt,
     setPendingPrompt,
     decrementCredits,
@@ -80,6 +84,7 @@ export function GeneratePrompt() {
       startGenerating: s.startGenerating,
       addVersion: s.addVersion,
       setSessionId: s.setSessionId,
+      selectVersion: s.selectVersion,
       pendingPrompt: s.pendingPrompt,
       setPendingPrompt: s.setPendingPrompt,
       decrementCredits: s.decrementCredits,
@@ -89,6 +94,8 @@ export function GeneratePrompt() {
   const openAuthModal = useThumbnailUIStore((s) => s.openAuthModal);
   const openCreditsModal = useThumbnailUIStore((s) => s.openCreditsModal);
   const promptFocusTick = useThumbnailUIStore((s) => s.promptFocusTick);
+
+  const isSessionLoading = !!params.sessionId && params.sessionId !== sessionId;
 
   useEffect(() => {
     if (promptFocusTick === 0) return;
@@ -109,7 +116,8 @@ export function GeneratePrompt() {
     setPrompt("");
     setFileEntries([]);
     clearAll();
-  }, [clearTick, clearAll]);
+    setPendingPrompt(null);
+  }, [clearTick, clearAll, setPendingPrompt]);
 
   function addFiles(newFiles: File[]) {
     if (!session) {
@@ -141,13 +149,12 @@ export function GeneratePrompt() {
     (value: string) => {
       const processed = processValueChange(value);
       setPrompt(processed);
-      if (pendingPrompt !== null) setPendingPrompt(processed.trim() || null);
+      setPendingPrompt(processed.trim() || null);
       if (pendingDeleteFile) setPendingDeleteFile(false);
       if (pendingDeleteVideoId) setPendingDeleteVideoId(null);
     },
     [
       processValueChange,
-      pendingPrompt,
       setPendingPrompt,
       pendingDeleteFile,
       pendingDeleteVideoId,
@@ -249,6 +256,11 @@ export function GeneratePrompt() {
         }
         if (!res.ok) throw new Error(data.error ?? "Unknown error");
 
+        if (useThumbnailStore.getState().sessionId !== activeSessionId) {
+          setLoading(false);
+          return;
+        }
+
         decrementCredits();
         addVersion({
           generationId: data.generationId,
@@ -264,6 +276,10 @@ export function GeneratePrompt() {
             ),
           createdAt: Date.now(),
         });
+
+        if (sessionCreatedHere) {
+          router.push(`/${activeSessionId}`);
+        }
       } catch (err) {
         toast(err instanceof Error ? err.message : "Something went wrong");
         setPrompt(sendPrompt);
@@ -322,9 +338,17 @@ export function GeneratePrompt() {
   useEffect(() => {
     if (sessionPending || !session || !pendingPrompt) return;
     setPendingPrompt(null);
+    if (versions.length > 0) return;
     setPrompt(pendingPrompt);
     doSubmit(pendingPrompt);
-  }, [sessionPending, session, pendingPrompt, setPendingPrompt, doSubmit]);
+  }, [
+    sessionPending,
+    session,
+    pendingPrompt,
+    versions.length,
+    setPendingPrompt,
+    doSubmit,
+  ]);
 
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId),
@@ -351,6 +375,27 @@ export function GeneratePrompt() {
         if (pendingDeleteFile) setPendingDeleteFile(false);
         if (pendingDeleteVideoId) setPendingDeleteVideoId(null);
         if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      }
+
+      if (
+        (e.key === "ArrowLeft" || e.key === "ArrowRight") &&
+        !prompt &&
+        versions.length > 1
+      ) {
+        const currentIndex = versions.findIndex(
+          (v) => v.id === selectedVersionId,
+        );
+        if (currentIndex !== -1) {
+          const nextIndex =
+            e.key === "ArrowLeft"
+              ? Math.max(0, currentIndex - 1)
+              : Math.min(versions.length - 1, currentIndex + 1);
+          if (nextIndex !== currentIndex) {
+            e.preventDefault();
+            selectVersion(versions[nextIndex].id);
+          }
+          return;
+        }
       }
 
       if (
@@ -440,12 +485,14 @@ export function GeneratePrompt() {
       textSegments,
       fileEntries,
       prompt,
+      versions,
       selectedVersionId,
       selectedVersion,
       pendingDeleteFile,
       pendingDeleteVideoId,
       removeFile,
       handleValueChange,
+      selectVersion,
     ],
   );
 
@@ -479,7 +526,10 @@ export function GeneratePrompt() {
         : randomPlaceholder;
 
   return (
-    <div className="absolute bottom-0 sm:bottom-5 sm:px-5 w-full flex justify-center pointer-events-none">
+    <div
+      inert={isSessionLoading || undefined}
+      className="absolute bottom-0 sm:bottom-5 sm:px-5 w-full flex justify-center pointer-events-none"
+    >
       <div className="mx-auto w-full max-w-xl pointer-events-auto">
         <FileUpload
           onFilesAdded={addFiles}
@@ -536,7 +586,7 @@ export function GeneratePrompt() {
               {mounted && session ? (
                 <AnimatePresence initial={false}>
                   {versions.length === 0 ? (
-                    <motion.div
+                    <m.div
                       key="starting-image-btn"
                       initial={
                         shouldReduceMotion
@@ -567,7 +617,7 @@ export function GeneratePrompt() {
                           ? "Edit starting image"
                           : "Add starting image"}
                       </FileUploadTrigger>
-                    </motion.div>
+                    </m.div>
                   ) : null}
                 </AnimatePresence>
               ) : (

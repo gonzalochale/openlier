@@ -3,7 +3,11 @@ import { type ChannelWidget, type VideoChip, youtubeRe } from "./utils";
 export type TextSegment =
   | { type: "plain"; text: string }
   | { type: "active"; text: string; handle: string }
-  | { type: "duplicate-channel"; text: string }
+  | {
+      handle: any;
+      type: "duplicate-channel";
+      text: string;
+    }
   | { type: "youtube-url"; text: string; videoId: string };
 
 const MENTION_RE = /@([\w.-]*)/g;
@@ -27,7 +31,7 @@ export function getTextSegments(
       matches.push({
         start: m.index,
         end: m.index + mentionText.length,
-        segment: { type: "duplicate-channel", text: mentionText },
+        segment: { type: "duplicate-channel", text: mentionText, handle },
       });
       continue;
     }
