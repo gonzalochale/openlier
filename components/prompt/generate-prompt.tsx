@@ -149,12 +149,21 @@ export function GeneratePrompt() {
 
   const handleValueChange = useCallback(
     (value: string) => {
+      if (!session) {
+        const hasYouTubeRef = youtubeRe().test(value);
+        if (hasYouTubeRef) {
+          pendingActionRef.current = "submit";
+          openAuthModal();
+          return;
+        }
+      }
+
       const processed = processValueChange(value);
       setPrompt(processed);
       if (pendingDeleteFile) setPendingDeleteFile(false);
       if (pendingDeleteVideoId) setPendingDeleteVideoId(null);
     },
-    [processValueChange, pendingDeleteFile, pendingDeleteVideoId],
+    [session, processValueChange, pendingDeleteFile, pendingDeleteVideoId, openAuthModal],
   );
 
   const textSegments = useMemo(
@@ -528,6 +537,13 @@ export function GeneratePrompt() {
 
     const pastedText = e.clipboardData.getData("text");
     if (!pastedText || !textareaRef.current) return;
+
+    if (!session && youtubeRe().test(pastedText)) {
+      e.preventDefault();
+      pendingActionRef.current = "submit";
+      openAuthModal();
+      return;
+    }
 
     const { selectionStart, selectionEnd } = textareaRef.current;
     const newValue =
