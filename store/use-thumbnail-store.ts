@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 import { toast } from "sonner";
 
 export interface ThumbnailVersion {
@@ -20,7 +19,6 @@ interface ThumbnailState {
   loading: boolean;
   generating: boolean;
   error: string | null;
-  pendingPrompt: string | null;
   credits: number | null;
   addVersion: (v: Omit<ThumbnailVersion, "id">) => void;
   selectVersion: (id: number) => void;
@@ -28,7 +26,6 @@ interface ThumbnailState {
   setLoading: (loading: boolean) => void;
   startGenerating: () => void;
   setError: (error: string) => void;
-  setPendingPrompt: (prompt: string | null) => void;
   setCredits: (credits: number) => void;
   decrementCredits: () => void;
   loadSession: (
@@ -46,16 +43,13 @@ interface ThumbnailState {
   clearHistory: () => void;
 }
 
-export const useThumbnailStore = create<ThumbnailState>()(
-  persist(
-    (set, get) => ({
+export const useThumbnailStore = create<ThumbnailState>()((set, get) => ({
       versions: [],
       selectedVersionId: null,
       sessionId: null,
       loading: false,
       generating: false,
       error: null,
-      pendingPrompt: null,
       credits: null,
       downloadTick: 0,
       downloading: false,
@@ -97,8 +91,6 @@ export const useThumbnailStore = create<ThumbnailState>()(
       startGenerating: () => set({ loading: true, generating: true }),
 
       setError: (error) => set({ error }),
-
-      setPendingPrompt: (prompt) => set({ pendingPrompt: prompt }),
 
       setCredits: (credits) => set({ credits }),
 
@@ -172,13 +164,4 @@ export const useThumbnailStore = create<ThumbnailState>()(
           sessionId: null,
           clearTick: s.clearTick + 1,
         })),
-    }),
-    {
-      name: "thumbnail-store",
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({
-        pendingPrompt: state.pendingPrompt,
-      }),
-    },
-  ),
-);
+}));

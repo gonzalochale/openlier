@@ -56,11 +56,10 @@ export function GeneratePrompt() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const pendingActionRef = useRef<"submit" | "attach" | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
   const userGeminiApiKey = useUserGeminiKeyStore((s) => s.apiKey);
   const {
     versions,
@@ -72,8 +71,6 @@ export function GeneratePrompt() {
     addVersion,
     setSessionId,
     selectVersion,
-    pendingPrompt,
-    setPendingPrompt,
     decrementCredits,
     clearTick,
   } = useThumbnailStore(
@@ -87,8 +84,6 @@ export function GeneratePrompt() {
       addVersion: s.addVersion,
       setSessionId: s.setSessionId,
       selectVersion: s.selectVersion,
-      pendingPrompt: s.pendingPrompt,
-      setPendingPrompt: s.setPendingPrompt,
       decrementCredits: s.decrementCredits,
       clearTick: s.clearTick,
     })),
@@ -118,12 +113,10 @@ export function GeneratePrompt() {
     setPrompt("");
     setFileEntries([]);
     clearAll();
-    setPendingPrompt(null);
-  }, [clearTick, clearAll, setPendingPrompt]);
+  }, [clearTick, clearAll]);
 
   function addFiles(newFiles: File[]) {
     if (!session) {
-      pendingActionRef.current = "attach";
       openAuthModal();
       return;
     }
@@ -152,7 +145,6 @@ export function GeneratePrompt() {
       if (!session) {
         const hasYouTubeRef = youtubeRe().test(value);
         if (hasYouTubeRef) {
-          pendingActionRef.current = "submit";
           openAuthModal();
           return;
         }
@@ -163,7 +155,13 @@ export function GeneratePrompt() {
       if (pendingDeleteFile) setPendingDeleteFile(false);
       if (pendingDeleteVideoId) setPendingDeleteVideoId(null);
     },
-    [session, processValueChange, pendingDeleteFile, pendingDeleteVideoId, openAuthModal],
+    [
+      session,
+      processValueChange,
+      pendingDeleteFile,
+      pendingDeleteVideoId,
+      openAuthModal,
+    ],
   );
 
   const textSegments = useMemo(
@@ -331,55 +329,14 @@ export function GeneratePrompt() {
         w.stage === "error" || w.stage === "loading" || w.stage === "empty",
     );
 
-  useEffect(() => {
-    if (cleanedEffectivePrompt) return;
-    if (pendingActionRef.current === "submit") {
-      pendingActionRef.current = null;
-    }
-    if (pendingPrompt) setPendingPrompt(null);
-  }, [cleanedEffectivePrompt, pendingPrompt, setPendingPrompt]);
-
   const handleSubmit = useCallback(async () => {
     if (!hasContent || loading) return;
     if (!session) {
-      pendingActionRef.current = "submit";
-      if (effectivePrompt) setPendingPrompt(effectivePrompt);
       openAuthModal();
       return;
     }
-    pendingActionRef.current = null;
     doSubmit(prompt);
-  }, [
-    hasContent,
-    prompt,
-    effectivePrompt,
-    loading,
-    session,
-    setPendingPrompt,
-    doSubmit,
-  ]);
-
-  useEffect(() => {
-    if (
-      sessionPending ||
-      !session ||
-      !pendingPrompt ||
-      pendingActionRef.current !== "submit"
-    )
-      return;
-    pendingActionRef.current = null;
-    setPendingPrompt(null);
-    if (versions.length > 0) return;
-    setPrompt(pendingPrompt);
-    doSubmit(pendingPrompt);
-  }, [
-    sessionPending,
-    session,
-    pendingPrompt,
-    versions.length,
-    setPendingPrompt,
-    doSubmit,
-  ]);
+  }, [hasContent, prompt, loading, session, doSubmit]);
 
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId),
@@ -540,7 +497,6 @@ export function GeneratePrompt() {
 
     if (!session && youtubeRe().test(pastedText)) {
       e.preventDefault();
-      pendingActionRef.current = "submit";
       openAuthModal();
       return;
     }
@@ -666,7 +622,6 @@ export function GeneratePrompt() {
                     size: "lg",
                   })}
                   onClick={() => {
-                    pendingActionRef.current = "attach";
                     openAuthModal();
                   }}
                 >
