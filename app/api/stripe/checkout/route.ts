@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         price_data: {
           currency: "usd",
           unit_amount: CREDIT_PLANS[credits],
-          product_data: { name: "Open Outlier Credits" },
+          product_data: { name: "Openlier Credits" },
         },
         quantity: credits,
       },

@@ -16,7 +16,7 @@ export function InfoModal({ open, onOpenChange }: InfoModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-w-xs">
         <DialogHeader>
-          <DialogTitle>What is Open Outlier?</DialogTitle>
+          <DialogTitle>What is Openlier?</DialogTitle>
           <DialogDescription>
             Open-source AI thumbnail generator, it allows you to create stunning
             thumbnails for your content with ease.
@@ -33,7 +33,7 @@ export function InfoModal({ open, onOpenChange }: InfoModalProps) {
             <br />
             The code is available on{" "}
             <a
-              href="https://github.com/gonzalochale/openoutlier"
+              href="https://github.com/gonzalochale/openlier"
               target="_blank"
               rel="noopener noreferrer"
             >

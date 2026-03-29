@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Open Outlier",
+  title: "Openlier",
   description: "Open source YouTube thumbnail generator",
 };
 
