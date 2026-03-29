@@ -22,6 +22,15 @@ export function InfoModal({ open, onOpenChange }: InfoModalProps) {
             thumbnails for your content with ease.
             <br />
             <br />
+            Get updates on{" "}
+            <a
+              href="https://x.com/gonzalochale"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              X
+            </a>
+            <br />
             The code is available on{" "}
             <a
               href="https://github.com/gonzalochale/openoutlier"
