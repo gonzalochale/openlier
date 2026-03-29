@@ -26,6 +26,7 @@ export interface PersistGenerationParams {
   sessionId: string;
   userId: string;
   prompt: string;
+  rawPrompt?: string | null;
   enhancedPrompt: string;
   base64: string;
   previousGenerationId?: string;

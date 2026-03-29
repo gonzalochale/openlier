@@ -33,11 +33,13 @@ const safetySchema = z.object({
 
 export async function POST(req: Request) {
   const session = await requireAuth();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session)
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const {
     prompt,
+    rawPrompt,
     uploadedImage,
     channelRefs,
     videoRefs,
@@ -45,6 +47,7 @@ export async function POST(req: Request) {
     previousGenerationId,
   } = body as {
     prompt: string;
+    rawPrompt?: string;
     uploadedImage?: { imageBase64: string; mimeType: string };
     channelRefs?: ChannelRef[];
     videoRefs?: VideoRef[];
@@ -57,7 +60,9 @@ export async function POST(req: Request) {
   }
   if (prompt.length > MAX_PROMPT_LENGTH) {
     return Response.json(
-      { error: `Message exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` },
+      {
+        error: `Message exceeds maximum length of ${MAX_PROMPT_LENGTH} characters`,
+      },
       { status: 400 },
     );
   }
@@ -86,12 +91,18 @@ export async function POST(req: Request) {
           ? fetchPreviousVersion(previousGenerationId, session.user.id)
           : Promise.resolve(
               uploadedImage
-                ? ({ ...uploadedImage, enhancedPrompt: null } satisfies PreviousVersion)
+                ? ({
+                    ...uploadedImage,
+                    enhancedPrompt: null,
+                  } satisfies PreviousVersion)
                 : undefined,
             ),
       ]);
 
-    const allRefImages = [...channelImageGroups.flat(), ...videoImageGroups.flat()];
+    const allRefImages = [
+      ...channelImageGroups.flat(),
+      ...videoImageGroups.flat(),
+    ];
     if (allRefImages.length > MAX_FILES) {
       await refundCredit(session.user.id);
       return Response.json(
@@ -109,6 +120,7 @@ export async function POST(req: Request) {
           sessionId,
           userId: session.user.id,
           prompt,
+          rawPrompt,
           enhancedPrompt: prompt,
           base64: whitePng(2560, 1440),
           previousGenerationId,
@@ -116,7 +128,11 @@ export async function POST(req: Request) {
           videoRefs,
         });
       }
-      return Response.json({ mimeType: "image/png", enhancedPrompt: prompt, generationId });
+      return Response.json({
+        mimeType: "image/png",
+        enhancedPrompt: prompt,
+        generationId,
+      });
     }
 
     const google = createGoogleGenerativeAI({ apiKey });
@@ -137,7 +153,10 @@ export async function POST(req: Request) {
     if (output.blocked) {
       await refundCredit(session.user.id);
       return Response.json(
-        { error: output.reason ?? "Generated content violates safety guidelines" },
+        {
+          error:
+            output.reason ?? "Generated content violates safety guidelines",
+        },
         { status: 422 },
       );
     }
@@ -145,7 +164,10 @@ export async function POST(req: Request) {
     const safePrompt = output.prompt;
     if (!safePrompt) {
       await refundCredit(session.user.id);
-      return Response.json({ error: "Failed to validate prompt" }, { status: 500 });
+      return Response.json(
+        { error: "Failed to validate prompt" },
+        { status: 500 },
+      );
     }
 
     // Use multi-turn when editing a previous AI generation that has thought signatures.
@@ -166,13 +188,21 @@ export async function POST(req: Request) {
       excludePreviousImage: isEditWithSigs,
     });
 
-    const contents = buildGeminiContents(text, images, previousVersion, isEditWithSigs);
+    const contents = buildGeminiContents(
+      text,
+      images,
+      previousVersion,
+      isEditWithSigs,
+    );
 
-    const { imageBase64, textThoughtSignature, imageThoughtSignature } = await callGeminiImage({
-      apiKey,
-      contents,
-      seed: previousGenerationId ? seedFromUUID(previousGenerationId) : undefined,
-    });
+    const { imageBase64, textThoughtSignature, imageThoughtSignature } =
+      await callGeminiImage({
+        apiKey,
+        contents,
+        seed: previousGenerationId
+          ? seedFromUUID(previousGenerationId)
+          : undefined,
+      });
 
     const generationId = crypto.randomUUID();
     if (sessionId) {
@@ -181,6 +211,7 @@ export async function POST(req: Request) {
         sessionId,
         userId: session.user.id,
         prompt,
+        rawPrompt,
         enhancedPrompt: safePrompt,
         base64: imageBase64,
         previousGenerationId,
@@ -191,10 +222,15 @@ export async function POST(req: Request) {
       });
     }
 
-    return Response.json({ mimeType: "image/png", enhancedPrompt: safePrompt, generationId });
+    return Response.json({
+      mimeType: "image/png",
+      enhancedPrompt: safePrompt,
+      generationId,
+    });
   } catch (err) {
     await refundCredit(session.user.id);
-    const message = err instanceof Error ? err.message : "Image generation failed";
+    const message =
+      err instanceof Error ? err.message : "Image generation failed";
     return Response.json({ error: message }, { status: 500 });
   }
 }

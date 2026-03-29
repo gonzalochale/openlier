@@ -1,9 +1,6 @@
 import { pool } from "@/lib/db";
 import { generationKey, getObjectBase64, uploadImage } from "@/lib/storage/s3";
-import type {
-  PersistGenerationParams,
-  PreviousVersion,
-} from "./types";
+import type { PersistGenerationParams, PreviousVersion } from "./types";
 
 export async function persistGeneration(params: PersistGenerationParams) {
   const {
@@ -11,6 +8,7 @@ export async function persistGeneration(params: PersistGenerationParams) {
     sessionId,
     userId,
     prompt,
+    rawPrompt,
     enhancedPrompt,
     base64,
     previousGenerationId,
@@ -25,15 +23,16 @@ export async function persistGeneration(params: PersistGenerationParams) {
     uploadImage(key, base64, "image/png"),
     pool.query(
       `INSERT INTO thumbnail_generation
-         (id, session_id, user_id, prompt, enhanced_prompt, image_key, mime_type,
+         (id, session_id, user_id, prompt, raw_prompt, enhanced_prompt, image_key, mime_type,
           previous_generation_id, channel_refs, video_refs,
           text_thought_signature, image_thought_signature)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         generationId,
         sessionId,
         userId,
         prompt,
+        rawPrompt ?? null,
         enhancedPrompt,
         key,
         "image/png",

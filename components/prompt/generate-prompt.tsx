@@ -182,6 +182,10 @@ export function GeneratePrompt() {
         .replace(/\s{2,}/g, " ")
         .trim();
 
+      const rawPrompt = videoChipsSnapshot
+        .filter(isFoundVideoChip)
+        .reduce((acc, c) => acc.replaceAll(c.title, c.originalUrl), trimmed);
+
       const videoRefs = videoChipsSnapshot
         .filter(isFoundVideoChip)
         .map((c) => ({ url: ytThumbnailUrl(c.videoId), title: c.title }));
@@ -230,6 +234,7 @@ export function GeneratePrompt() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             prompt: sendPrompt,
+            rawPrompt,
             uploadedImage,
             channelRefs: channelRefs.length > 0 ? channelRefs : undefined,
             videoRefs: videoRefs.length > 0 ? videoRefs : undefined,
@@ -262,12 +267,7 @@ export function GeneratePrompt() {
           mimeType: data.mimeType,
           enhancedPrompt: data.enhancedPrompt ?? null,
           prompt: sendPrompt,
-          rawPrompt: videoChipsSnapshot
-            .filter(isFoundVideoChip)
-            .reduce(
-              (acc, c) => acc.replaceAll(c.title, c.originalUrl),
-              trimmed,
-            ),
+          rawPrompt,
           createdAt: Date.now(),
         });
 
