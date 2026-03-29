@@ -149,13 +149,11 @@ export function GeneratePrompt() {
     (value: string) => {
       const processed = processValueChange(value);
       setPrompt(processed);
-      setPendingPrompt(processed.trim() || null);
       if (pendingDeleteFile) setPendingDeleteFile(false);
       if (pendingDeleteVideoId) setPendingDeleteVideoId(null);
     },
     [
       processValueChange,
-      setPendingPrompt,
       pendingDeleteFile,
       pendingDeleteVideoId,
     ],
@@ -317,13 +315,23 @@ export function GeneratePrompt() {
         w.stage === "error" || w.stage === "loading" || w.stage === "empty",
     );
 
+  useEffect(() => {
+    if (cleanedEffectivePrompt) return;
+    if (pendingActionRef.current === "submit") {
+      pendingActionRef.current = null;
+    }
+    if (pendingPrompt) setPendingPrompt(null);
+  }, [cleanedEffectivePrompt, pendingPrompt, setPendingPrompt]);
+
   const handleSubmit = useCallback(async () => {
     if (!hasContent || loading) return;
     if (!session) {
+      pendingActionRef.current = "submit";
       if (effectivePrompt) setPendingPrompt(effectivePrompt);
       openAuthModal();
       return;
     }
+    pendingActionRef.current = null;
     doSubmit(prompt);
   }, [
     hasContent,
@@ -336,7 +344,14 @@ export function GeneratePrompt() {
   ]);
 
   useEffect(() => {
-    if (sessionPending || !session || !pendingPrompt) return;
+    if (
+      sessionPending ||
+      !session ||
+      !pendingPrompt ||
+      pendingActionRef.current !== "submit"
+    )
+      return;
+    pendingActionRef.current = null;
     setPendingPrompt(null);
     if (versions.length > 0) return;
     setPrompt(pendingPrompt);
