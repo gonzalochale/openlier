@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+
+const visitorScriptSrc = process.env.PLAUSIBLE_SRC;
+const visitorScriptDomain = process.env.PLAUSIBLE_DOMAIN;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +41,16 @@ export default function RootLayout({
       )}
     >
       <TooltipProvider>
+        {visitorScriptSrc && visitorScriptDomain ? (
+          <head>
+            <Script
+              defer
+              data-domain={visitorScriptDomain}
+              src={visitorScriptSrc}
+              strategy="afterInteractive"
+            />
+          </head>
+        ) : null}
         <body className="min-h-full w-full flex flex-col justify-center items-center">
           {children}
           <Toaster position="top-center" />
