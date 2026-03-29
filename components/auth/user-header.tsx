@@ -20,6 +20,7 @@ export function UserHeader() {
   const credits = useThumbnailStore((s) => s.credits);
   const openCreditsModal = useThumbnailUIStore((s) => s.openCreditsModal);
   const openInfoModal = useThumbnailUIStore((s) => s.openInfoModal);
+  const openAuthModal = useThumbnailUIStore((s) => s.openAuthModal);
   const openGeminiKeyModal = useThumbnailUIStore((s) => s.openGeminiKeyModal);
 
   return (
@@ -68,7 +69,23 @@ export function UserHeader() {
             </Tooltip>
           </>
         ) : (
-          <LoginButton />
+          <>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="icon-lg"
+                    onClick={openAuthModal}
+                  >
+                    <KeyRound />
+                  </Button>
+                }
+              />
+              <TooltipContent>Sign in to configure Gemini API key</TooltipContent>
+            </Tooltip>
+            <LoginButton />
+          </>
         )}
       </div>
     </header>
