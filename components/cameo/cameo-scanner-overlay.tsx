@@ -31,10 +31,10 @@ const TICK_W_BASE = 12;
 const TICK_W_HOLD_MAX = 20;
 const TICK_W_DONE = 23;
 
-const COLOR_IDLE = "color-mix(in srgb, white 15%, transparent)";
-const COLOR_IDLE_LOCKED = "color-mix(in srgb, white 6%, transparent)";
-const COLOR_ACTIVE = "color-mix(in srgb, white 45%, transparent)";
-const COLOR_DONE = "var(--channel-foreground)";
+const COLOR_IDLE = "var(--accent)";
+const COLOR_IDLE_LOCKED = "var(--accent)";
+const COLOR_ACTIVE = "var(--channel)";
+const COLOR_DONE = "var(--ring)";
 
 const FRONT_RING_R = 111;
 const FRONT_RING_CIRC = 2 * Math.PI * FRONT_RING_R;
@@ -100,7 +100,7 @@ export function CameoScannerOverlay({
             cy={CY}
             r={FRONT_RING_R}
             fill="none"
-            stroke="var(--channel-foreground)"
+            stroke="var(--ring)"
             strokeWidth={TICK_CIRC_W}
             strokeDasharray={FRONT_RING_CIRC}
             strokeLinecap="round"

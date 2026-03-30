@@ -24,7 +24,7 @@ export function CameoProcessing() {
           style={{
             inset: SIZE / 2 - VIDEO_R,
             borderRadius: "50%",
-            background: "var(--channel)",
+            background: "var(--background)",
           }}
           animate={rm ? {} : { opacity: [0.3, 0.65, 0.3] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}

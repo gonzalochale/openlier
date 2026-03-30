@@ -76,8 +76,8 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --channel: oklch(27.45% 0.066 253.93);
-  --channel-foreground: oklch(54.06% 0.14 253.17);
+  --channel: oklch(54.06% 0.14 253.17);
+  --channel-foreground: oklch(1 0 0);
   --success: oklch(0.527 0.154 150.069);
 
   --radius: 0.75rem;
@@ -140,7 +140,6 @@
     @apply font-sans;
   }
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   *,

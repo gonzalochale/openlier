@@ -399,7 +399,7 @@ export function CameoScanner({
           style={{
             inset: SIZE / 2 - VIDEO_R,
             borderRadius: "50%",
-            backgroundColor: "black",
+            backgroundColor: "var(--accent)",
           }}
           initial={rm ? false : { opacity: 0 }}
           animate={{ opacity: cameraError ? 0.3 : 1 }}
@@ -417,7 +417,7 @@ export function CameoScanner({
               <m.div
                 key="skeleton"
                 className="absolute inset-0"
-                style={{ background: "var(--channel)" }}
+                style={{ background: "var(--ring)" }}
                 initial={{ opacity: 0 }}
                 animate={rm ? { opacity: 0.5 } : { opacity: [0.3, 0.65, 0.3] }}
                 exit={{ opacity: 0 }}
