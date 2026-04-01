@@ -75,14 +75,14 @@ export function CameoScannerOverlay({
   useMotionValueEvent(holdProgressMap.down, "change", setHoldDown);
   useMotionValueEvent(holdProgressMap.left, "change", setHoldLeft);
 
-  const holdFractions: Record<DirectionalAngle, number> = {
-    up: holdUp,
-    right: holdRight,
-    down: holdDown,
-    left: holdLeft,
-  };
-
   const frontDone = capturedAngles.has("front");
+
+  const holdFractions: Record<DirectionalAngle, number> = {
+    up: frontDone ? holdUp : 0,
+    right: frontDone ? holdRight : 0,
+    down: frontDone ? holdDown : 0,
+    left: frontDone ? holdLeft : 0,
+  };
   const aligned = holdFront > 0;
 
   return (

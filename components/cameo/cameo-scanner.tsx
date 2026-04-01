@@ -81,6 +81,7 @@ const COMPOSITE_LAYOUT: [CameoAngle, number, number][] = [
   ["up", 0, 1],
   ["down", 1, 1],
 ];
+const SIDE_ANGLES: CameoAngle[] = ["left", "right", "up", "down"];
 
 export function CameoScanner({
   onComplete,
@@ -95,6 +96,7 @@ export function CameoScanner({
   const holdStartRef = useRef<Partial<Record<CameoAngle, number>>>({});
   const rafRef = useRef<number | null>(null);
   const capturedRef = useRef<Map<CameoAngle, string>>(new Map());
+  const completionSentRef = useRef(false);
 
   const [cameraReady, setCameraReady] = useState(false);
   const [mpReady, setMpReady] = useState(false);
@@ -255,10 +257,25 @@ export function CameoScanner({
             .data as unknown as Float32Array,
         );
 
-        for (const angle of CAMEO_ANGLES) {
-          if (capturedRef.current.has(angle)) continue;
+        const frontCaptured = capturedRef.current.has("front");
 
-          if (angle !== "front" && !capturedRef.current.has("front")) continue;
+        if (!frontCaptured) {
+          for (const side of SIDE_ANGLES) {
+            if (holdStartRef.current[side] !== undefined) {
+              delete holdStartRef.current[side];
+            }
+            if (hp[side].get() > 0) {
+              animate(hp[side], 0, { duration: 0.1 });
+            }
+          }
+        }
+
+        const anglesToCheck: CameoAngle[] = frontCaptured
+          ? [...CAMEO_ANGLES]
+          : ["front"];
+
+        for (const angle of anglesToCheck) {
+          if (capturedRef.current.has(angle)) continue;
 
           if (checkAlignment(pose, angle)) {
             if (holdStartRef.current[angle] === undefined) {
@@ -275,6 +292,15 @@ export function CameoScanner({
               next.set(angle, base64);
               capturedRef.current = next;
               setCaptured(next);
+
+              if (angle === "front") {
+                for (const side of SIDE_ANGLES) {
+                  delete holdStartRef.current[side];
+                  if (hp[side].get() > 0) {
+                    animate(hp[side], 0, { duration: 0.1 });
+                  }
+                }
+              }
             }
           } else if (holdStartRef.current[angle] !== undefined) {
             delete holdStartRef.current[angle];
@@ -301,6 +327,9 @@ export function CameoScanner({
 
   useEffect(() => {
     if (captured.size < CAMEO_ANGLES.length) return;
+    if (!captured.has("front")) return;
+    if (completionSentRef.current) return;
+    completionSentRef.current = true;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     const canvas = canvasRef.current!;

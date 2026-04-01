@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
   Dialog,
@@ -49,15 +49,23 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
   const [pendingImages, setPendingImages] = useState<
     { angle: string; base64: string }[] | null
   >(null);
+  const uploadRunIdRef = useRef(0);
+  const uploadAbortRef = useRef<AbortController | null>(null);
   const rm = useReducedMotion();
 
   useEffect(() => {
-    if (!registered) {
+    if (!registered && open) {
       setPhase("scan");
       setPendingImages(null);
       setUploadError(null);
     }
-  }, [registered]);
+  }, [registered, open]);
+
+  useEffect(() => {
+    return () => {
+      uploadAbortRef.current?.abort();
+    };
+  }, []);
 
   const slideVariants = {
     initial: rm ? { opacity: 0 } : { opacity: 0, y: 8 },
@@ -66,45 +74,70 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
   };
   const transition = { duration: 0.15, ease: EASE };
 
-  async function upload(images: { angle: string; base64: string }[]) {
-    setPhase("processing");
+  const handleClose = useCallback(() => {
+    uploadRunIdRef.current += 1;
+    uploadAbortRef.current?.abort();
+    uploadAbortRef.current = null;
     setUploadError(null);
-    try {
-      const res = await fetch("/api/cameo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: images[0].base64 }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Upload failed");
-      }
-      setRegistered(true);
-    } catch (err) {
-      setPhase("upload-error");
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
-    }
-  }
-
-  function handleScanComplete(images: { angle: string; base64: string }[]) {
-    setPendingImages(images);
-    upload(images);
-  }
-
-  function handleClose() {
+    setPendingImages(null);
+    if (!registered) setPhase("scan");
     onOpenChange(false);
-    setTimeout(() => {
+  }, [onOpenChange, registered]);
+
+  const upload = useCallback(
+    async (images: { angle: string; base64: string }[]) => {
+      const runId = ++uploadRunIdRef.current;
+      uploadAbortRef.current?.abort();
+      const controller = new AbortController();
+      uploadAbortRef.current = controller;
+      setPhase("processing");
       setUploadError(null);
-      setPendingImages(null);
-      if (!registered) setPhase("scan");
-    }, 300);
-  }
+      try {
+        const res = await fetch("/api/cameo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({ image: images[0].base64 }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error ?? "Upload failed");
+        }
+        if (runId !== uploadRunIdRef.current) return;
+        setRegistered(true);
+        handleClose();
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        if (runId !== uploadRunIdRef.current) return;
+        setPhase("upload-error");
+        setUploadError(err instanceof Error ? err.message : "Upload failed");
+      } finally {
+        if (uploadAbortRef.current === controller) {
+          uploadAbortRef.current = null;
+        }
+      }
+    },
+    [handleClose, setRegistered],
+  );
+
+  const handleScanComplete = useCallback(
+    (images: { angle: string; base64: string }[]) => {
+      setPendingImages(images);
+      upload(images);
+    },
+    [upload],
+  );
 
   const headerKey = registered ? "manage" : phase;
   const { title, description } = HEADER[headerKey];
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) handleClose();
+      }}
+    >
       <DialogContent showCloseButton={false} className="max-w-sm">
         <DialogHeader>
           <AnimatePresence mode="wait">
