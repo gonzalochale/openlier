@@ -37,7 +37,6 @@ import { useCameoReferences } from "@/hooks/use-cameo-references";
 import { PromptTextOverlay } from "@/components/youtube/prompt-text-overlay";
 import { FileChipList, type FileEntry } from "@/components/file-chip-list";
 import { CameoButton } from "@/components/cameo/cameo-button";
-import { useUserGeminiKeyStore } from "@/store/use-user-gemini-key-store";
 import { useCameoStore } from "@/store/use-cameo-store";
 
 export function GeneratePrompt() {
@@ -67,7 +66,6 @@ export function GeneratePrompt() {
   const prevRouteSessionIdRef = useRef<string | undefined>(params.sessionId);
 
   const { data: session } = authClient.useSession();
-  const userGeminiApiKey = useUserGeminiKeyStore((s) => s.apiKey);
   const {
     versions,
     selectedVersionId,
@@ -136,7 +134,6 @@ export function GeneratePrompt() {
     });
   const isStartingImageDisabled =
     loading || cameoLoading || selectedVersionId !== null;
-  const hasUserGeminiApiKey = !!userGeminiApiKey.trim();
 
   useEffect(() => {
     if (clearTick === 0) return;
@@ -255,7 +252,7 @@ export function GeneratePrompt() {
           handle: w.ref.handle,
         }));
 
-      if (credits !== null && credits < 1 && !hasUserGeminiApiKey) {
+      if (credits !== null && credits < 1) {
         openCreditsModal();
         return;
       }
@@ -291,7 +288,6 @@ export function GeneratePrompt() {
           body: JSON.stringify({
             prompt: sendPrompt,
             generationPrompt,
-            userApiKey: hasUserGeminiApiKey ? userGeminiApiKey : undefined,
             uploadedImage,
             channelRefs: channelRefs.length > 0 ? channelRefs : undefined,
             videoRefs: videoRefs.length > 0 ? videoRefs : undefined,
@@ -369,8 +365,6 @@ export function GeneratePrompt() {
       setLoading,
       setCredits,
       clearAll,
-      userGeminiApiKey,
-      hasUserGeminiApiKey,
       cameoActive,
       cameoRegistered,
       openCreditsModal,

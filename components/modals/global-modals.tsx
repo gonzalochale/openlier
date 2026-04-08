@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { AuthModal } from "@/components/modals/auth-modal";
 import { CreditsModal } from "@/components/modals/credits-modal";
-import { GeminiKeyModal } from "@/components/modals/gemini-key-modal";
 import { InfoModal } from "@/components/modals/info-modal";
 import { CameoModal } from "@/components/cameo/cameo-modal";
 import { useThumbnailStore } from "@/store/use-thumbnail-store";
@@ -16,7 +15,10 @@ export function GlobalModals() {
   const { data: session, isPending } = authClient.useSession();
   const setCredits = useThumbnailStore((s) => s.setCredits);
   const { setRegistered, setLoading } = useCameoStore(
-    useShallow((s) => ({ setRegistered: s.setRegistered, setLoading: s.setLoading })),
+    useShallow((s) => ({
+      setRegistered: s.setRegistered,
+      setLoading: s.setLoading,
+    })),
   );
 
   useEffect(() => {
@@ -63,8 +65,6 @@ export function GlobalModals() {
     closeCreditsModal,
     infoModalOpen,
     closeInfoModal,
-    geminiKeyModalOpen,
-    closeGeminiKeyModal,
     cameoModalOpen,
     closeCameoModal,
   } = useThumbnailUIStore(
@@ -75,8 +75,6 @@ export function GlobalModals() {
       closeCreditsModal: s.closeCreditsModal,
       infoModalOpen: s.infoModalOpen,
       closeInfoModal: s.closeInfoModal,
-      geminiKeyModalOpen: s.geminiKeyModalOpen,
-      closeGeminiKeyModal: s.closeGeminiKeyModal,
       cameoModalOpen: s.cameoModalOpen,
       closeCameoModal: s.closeCameoModal,
     })),
@@ -95,10 +93,6 @@ export function GlobalModals() {
       <InfoModal
         open={infoModalOpen}
         onOpenChange={(o) => !o && closeInfoModal()}
-      />
-      <GeminiKeyModal
-        open={geminiKeyModalOpen}
-        onOpenChange={(o) => !o && closeGeminiKeyModal()}
       />
       <CameoModal
         open={cameoModalOpen}

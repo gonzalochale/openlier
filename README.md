@@ -9,7 +9,7 @@ It supports prompt-based generation, optional style references from YouTube link
 - Better Auth (GitHub OAuth)
 - PostgreSQL (`pg`)
 - Stripe (checkout + webhook)
-- Google Gemini (prompt safety + image generation)
+- Google Gemini via server-side API key (prompt safety + image generation)
 - AWS S3 (image storage)
 - Zustand + Tailwind CSS
 
@@ -22,7 +22,7 @@ It supports prompt-based generation, optional style references from YouTube link
 - PostgreSQL database
 - GitHub OAuth app
 - Stripe account
-- Google AI Studio key + YouTube Data API key
+- Google AI Studio server API key + YouTube Data API key
 - AWS S3 bucket and IAM credentials
 
 ### 2) Install
@@ -54,7 +54,7 @@ GITHUB_CLIENT_SECRET=
 Keep the rest if you want the full product flow locally:
 
 - Stripe for credit checkout
-- Google AI Studio + YouTube API for generation/reference enrichment
+- Google AI Studio on the server + YouTube API for generation/reference enrichment
 - S3 for storing generated images
 
 Set `GENERATE_IMAGES=false` if you want to avoid real image generation while wiring the app locally.
@@ -129,7 +129,7 @@ pnpm start
 ## Troubleshooting
 
 - `401 Unauthorized`: verify session/auth cookies and GitHub OAuth config.
-- `Error generating image`: verify `GOOGLE_AI_STUDIO_API_KEY` and `GENERATE_IMAGES=true`.
+- `Error generating image`: verify the server-side `GOOGLE_AI_STUDIO_API_KEY` and `GENERATE_IMAGES=true`.
 - Stripe webhook errors: verify `STRIPE_WEBHOOK_SECRET` and raw-body signature handling.
 - YouTube lookup failures: verify `YOUTUBE_API_KEY` and quota.
 - Missing image previews: verify S3 credentials, bucket name, and region.

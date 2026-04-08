@@ -127,7 +127,6 @@ export async function POST(req: Request) {
   const {
     prompt,
     generationPrompt,
-    userApiKey,
     uploadedImage,
     channelRefs,
     videoRefs,
@@ -137,7 +136,6 @@ export async function POST(req: Request) {
   } = body as {
     prompt: string;
     generationPrompt?: string;
-    userApiKey?: string;
     uploadedImage?: { imageBase64: string; mimeType: string };
     channelRefs?: ChannelRef[];
     videoRefs?: VideoRef[];
@@ -161,37 +159,26 @@ export async function POST(req: Request) {
   }
 
   const envApiKey = process.env.GOOGLE_AI_STUDIO_API_KEY?.trim();
-  const fallbackUserApiKey = userApiKey?.trim();
 
   let deducted = false;
-  let apiKeyToUse: string | null = null;
-  let creditSource: "server_credits" | "user_api_key" = "server_credits";
+  if (!envApiKey) {
+    return Response.json(
+      { error: "Google AI Studio API key is not configured" },
+      { status: 500 },
+    );
+  }
 
-  if (envApiKey) {
-    deducted = await deductCredit(session.user.id);
-    if (deducted) {
-      apiKeyToUse = envApiKey;
-      creditSource = "server_credits";
-    } else if (fallbackUserApiKey) {
-      apiKeyToUse = fallbackUserApiKey;
-      creditSource = "user_api_key";
-    } else {
-      const remainingCredits = await getCredits(session.user.id);
-      return Response.json(
-        {
-          error: "Insufficient credits",
-          code: "NO_CREDITS",
-          remainingCredits,
-          creditSource: "server_credits",
-        },
-        { status: 402 },
-      );
-    }
-  } else if (fallbackUserApiKey) {
-    apiKeyToUse = fallbackUserApiKey;
-    creditSource = "user_api_key";
-  } else {
-    return Response.json({ error: "Error generating image" }, { status: 500 });
+  deducted = await deductCredit(session.user.id);
+  if (!deducted) {
+    const remainingCredits = await getCredits(session.user.id);
+    return Response.json(
+      {
+        error: "Insufficient credits",
+        code: "NO_CREDITS",
+        remainingCredits,
+      },
+      { status: 402 },
+    );
   }
 
   const maybeRefundCredit = async () => {
@@ -200,7 +187,7 @@ export async function POST(req: Request) {
   };
 
   try {
-    const google = createGoogleGenerativeAI({ apiKey: apiKeyToUse });
+    const google = createGoogleGenerativeAI({ apiKey: envApiKey });
 
     const [[channelImageGroups, videoImageGroups], previousVersion] =
       await Promise.all([
@@ -259,7 +246,6 @@ export async function POST(req: Request) {
         generationId,
         cameoUsed: shouldUseCameo,
         remainingCredits,
-        creditSource,
       });
     }
 
@@ -285,7 +271,6 @@ export async function POST(req: Request) {
           error:
             output.reason ?? "Generated content violates safety guidelines",
           remainingCredits,
-          creditSource,
         },
         { status: 422 },
       );
@@ -296,7 +281,7 @@ export async function POST(req: Request) {
       await maybeRefundCredit();
       const remainingCredits = await getCredits(session.user.id);
       return Response.json(
-        { error: "Failed to validate prompt", remainingCredits, creditSource },
+        { error: "Failed to validate prompt", remainingCredits },
         { status: 500 },
       );
     }
@@ -327,7 +312,7 @@ export async function POST(req: Request) {
 
     const { imageBase64, textThoughtSignature, imageThoughtSignature } =
       await callGeminiImage({
-        apiKey: apiKeyToUse,
+        apiKey: envApiKey,
         contents,
         seed: previousGenerationId
           ? seedFromUUID(previousGenerationId)
@@ -360,7 +345,6 @@ export async function POST(req: Request) {
       generationId,
       cameoUsed: shouldUseCameo,
       remainingCredits,
-      creditSource,
     });
   } catch (err) {
     await maybeRefundCredit();
@@ -368,7 +352,7 @@ export async function POST(req: Request) {
     const message =
       err instanceof Error ? err.message : "Image generation failed";
     return Response.json(
-      { error: message, remainingCredits, creditSource },
+      { error: message, remainingCredits },
       { status: 500 },
     );
   }
