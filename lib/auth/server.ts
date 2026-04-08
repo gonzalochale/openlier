@@ -17,12 +17,14 @@ export const auth = betterAuth({
         required: false,
         defaultValue: 1,
         input: false,
+        fieldName: "credits",
       },
       stripeCustomerId: {
         type: "string",
         required: false,
         input: false,
         returned: false, // never expose Stripe customer ID to the client
+        fieldName: "stripe_customer_id",
       },
     },
   },

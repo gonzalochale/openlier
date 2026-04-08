@@ -33,47 +33,44 @@ pnpm install
 
 ### 3) Configure environment
 
-Create `.env.local` in the project root:
+Copy `.env.example` to `.env.local` and fill in the values you need:
+
+```bash
+cp .env.example .env.local
+```
+
+Minimum local variables:
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DB_NAME
+BETTER_AUTH_URL=http://localhost:3000
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB_NAME
+BETTER_AUTH_SECRET=replace-me-with-a-long-random-string
 
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-
-GOOGLE_AI_STUDIO_API_KEY=
-YOUTUBE_API_KEY=
-
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1
-AWS_S3_BUCKET=
-
-# Optional: set to "true" to enable real image generation.
-# If false/missing, API returns a placeholder image for local testing.
-GENERATE_IMAGES=true
 ```
 
-Note: Better Auth can also require `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` depending on your runtime/deployment setup.
+Keep the rest if you want the full product flow locally:
 
-### 4) Database setup (manual SQL migrations)
+- Stripe for credit checkout
+- Google AI Studio + YouTube API for generation/reference enrichment
+- S3 for storing generated images
 
-This repository currently uses raw SQL queries and expects business tables to exist.
-There is no versioned migration folder in this repo right now.
+Set `GENERATE_IMAGES=false` if you want to avoid real image generation while wiring the app locally.
 
-At minimum, ensure these tables exist in your database:
+### 4) Create the database schema
 
-- `thumbnail_session`
-- `thumbnail_generation`
-- `credit_purchase`
-- `konami_redemption`
+The repo now ships with an idempotent local database bootstrap:
 
-The auth `user` table is managed by Better Auth.
+```bash
+pnpm db:setup
+```
+
+This creates:
+
+- Better Auth tables: `"user"`, `session`, `account`, `verification`
+- App tables: `thumbnail_session`, `thumbnail_generation`, `credit_purchase`, `konami_redemption`, `user_cameo`
 
 ### 5) Run locally
 
@@ -82,7 +79,7 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and sign in with GitHub.
-and sign in with GitHub.
+Local auth still requires a GitHub OAuth app configured for your local callback URL.
 
 ## Scripts
 
@@ -90,6 +87,7 @@ and sign in with GitHub.
 - `pnpm build` - Build production bundle
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint
+- `pnpm db:setup` - Create/update the local PostgreSQL schema
 
 ## Main API Routes
 
@@ -119,7 +117,7 @@ and sign in with GitHub.
 ## Deploy (generic Node/Next.js)
 
 1. Set all environment variables in your hosting platform.
-2. Provision PostgreSQL and run your manual SQL setup before first request.
+2. Provision PostgreSQL and run `pnpm db:setup` before first request.
 3. Expose a public HTTPS URL for `POST /api/stripe/webhook` and configure it in Stripe.
 4. Build and run:
 
@@ -135,4 +133,4 @@ pnpm start
 - Stripe webhook errors: verify `STRIPE_WEBHOOK_SECRET` and raw-body signature handling.
 - YouTube lookup failures: verify `YOUTUBE_API_KEY` and quota.
 - Missing image previews: verify S3 credentials, bucket name, and region.
-- DB relation errors: required business tables are missing.
+- DB relation errors: run `pnpm db:setup` and confirm `DATABASE_URL` points to the expected database.
