@@ -29,10 +29,7 @@ export function UserHeader() {
           <Info />
         </Button>
         {isPending ? (
-          <>
-            <Skeleton className="size-8" />
-            <Skeleton className="w-28 h-8" />
-          </>
+          <Skeleton className="w-28 h-8" />
         ) : session ? (
           <>
             <Tooltip>
