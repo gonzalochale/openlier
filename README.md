@@ -1,7 +1,7 @@
 # Openlier
 
 Openlier is an open-source AI YouTube thumbnail generator built with Next.js.
-It supports prompt-based generation, optional style references from YouTube links, credit-based usage, and Stripe checkout.
+It supports prompt-based generation, optional style references from YouTube links, local-browser cameo references, credit-based usage, and Stripe checkout.
 
 ## Stack
 
@@ -10,7 +10,7 @@ It supports prompt-based generation, optional style references from YouTube link
 - PostgreSQL (`pg`)
 - Stripe (checkout + webhook)
 - Google Gemini via server-side API key (prompt safety + image generation)
-- AWS S3 (image storage)
+- AWS S3 (generated image storage)
 - Zustand + Tailwind CSS
 
 ## Quick Start
@@ -57,6 +57,13 @@ Keep the rest if you want the full product flow locally:
 - Google AI Studio on the server + YouTube API for generation/reference enrichment
 - S3 for storing generated images
 
+## Cameo Privacy
+
+- Cameo face references are stored only in the browser's `localStorage`
+- Cameo images are never written to PostgreSQL or S3
+- Cameo images are sent only inside the active `POST /api/generate` request when the user uses `#me`
+- If the user switches browsers or devices, they need to scan their cameo again
+
 Set `GENERATE_IMAGES=false` if you want to avoid real image generation while wiring the app locally.
 
 ### 4) Create the database schema
@@ -70,7 +77,7 @@ pnpm db:setup
 This creates:
 
 - Better Auth tables: `"user"`, `session`, `account`, `verification`
-- App tables: `thumbnail_session`, `thumbnail_generation`, `credit_purchase`, `konami_redemption`, `user_cameo`
+- App tables: `thumbnail_session`, `thumbnail_generation`, `credit_purchase`, `konami_redemption`
 
 ### 5) Run locally
 
@@ -110,9 +117,10 @@ Local auth still requires a GitHub OAuth app configured for your local callback 
 1. User signs in with GitHub.
 2. User creates a session.
 3. User submits prompt (+ optional references).
-4. API deducts 1 credit and runs Gemini safety/enrichment.
-5. If enabled, image is generated and uploaded to S3.
-6. Generation metadata is stored in PostgreSQL.
+4. If the prompt uses `#me`, the browser attaches the locally stored cameo image to that single request.
+5. API deducts 1 credit and runs Gemini safety/enrichment.
+6. If enabled, image is generated and uploaded to S3.
+7. Generation metadata is stored in PostgreSQL.
 
 ## Deploy (generic Node/Next.js)
 
@@ -133,4 +141,5 @@ pnpm start
 - Stripe webhook errors: verify `STRIPE_WEBHOOK_SECRET` and raw-body signature handling.
 - YouTube lookup failures: verify `YOUTUBE_API_KEY` and quota.
 - Missing image previews: verify S3 credentials, bucket name, and region.
+- `#me` does not work: re-scan the cameo in the same browser; it is stored only locally and is not shared across devices.
 - DB relation errors: run `pnpm db:setup` and confirm `DATABASE_URL` points to the expected database.

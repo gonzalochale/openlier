@@ -138,14 +138,6 @@ const statements = [
     CREATE UNIQUE INDEX IF NOT EXISTS konami_redemption_email_key
     ON konami_redemption (email)
   `,
-  `
-    CREATE TABLE IF NOT EXISTS user_cameo (
-      user_id text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
-      image_key text NOT NULL,
-      created_at timestamptz NOT NULL DEFAULT now(),
-      updated_at timestamptz NOT NULL DEFAULT now()
-    )
-  `,
 ] as const;
 
 export async function setupDatabase() {

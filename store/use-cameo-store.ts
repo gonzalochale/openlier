@@ -1,15 +1,22 @@
 import { create } from "zustand";
+import { hasLocalCameo } from "@/lib/cameo/local";
 
 interface CameoState {
-  registered: boolean;
+  availableLocally: boolean;
   loading: boolean;
-  setRegistered: (v: boolean) => void;
+  hydrate: () => void;
+  setAvailableLocally: (v: boolean) => void;
   setLoading: (v: boolean) => void;
 }
 
 export const useCameoStore = create<CameoState>()((set) => ({
-  registered: false,
+  availableLocally: false,
   loading: true,
-  setRegistered: (registered) => set({ registered }),
+  hydrate: () =>
+    set({
+      availableLocally: hasLocalCameo(),
+      loading: false,
+    }),
+  setAvailableLocally: (availableLocally) => set({ availableLocally }),
   setLoading: (loading) => set({ loading }),
 }));

@@ -37,6 +37,7 @@ import { useCameoReferences } from "@/hooks/use-cameo-references";
 import { PromptTextOverlay } from "@/components/youtube/prompt-text-overlay";
 import { FileChipList, type FileEntry } from "@/components/file-chip-list";
 import { CameoButton } from "@/components/cameo/cameo-button";
+import { getLocalCameoReferenceImage } from "@/lib/cameo/local";
 import { useCameoStore } from "@/store/use-cameo-store";
 
 export function GeneratePrompt() {
@@ -116,12 +117,12 @@ export function GeneratePrompt() {
   }, [params.sessionId]);
 
   const { cameoActive } = useCameoReferences(prompt);
-  const cameoRegistered = useCameoStore((s) => s.registered);
+  const cameoAvailableLocally = useCameoStore((s) => s.availableLocally);
   const cameoLoading = useCameoStore((s) => s.loading);
 
   const reservedSlots =
     (selectedVersionId !== null ? 1 : 0) +
-    (cameoActive && cameoRegistered ? 1 : 0);
+    (cameoActive && cameoAvailableLocally ? 1 : 0);
 
   const { channelWidgets, videoChips, processValueChange, clearAll } =
     useYouTubeReferences({
@@ -156,7 +157,7 @@ export function GeneratePrompt() {
     ]);
   }
 
-  function removeFile(index: number) {
+  const removeFile = useCallback((index: number) => {
     setFileHoverOpen(false);
     setTimeout(() => {
       setFileEntries((prev) => {
@@ -165,7 +166,7 @@ export function GeneratePrompt() {
       });
       setFileHoverOpen(undefined);
     }, 130);
-  }
+  }, []);
 
   const handleValueChange = useCallback(
     (value: string) => {
@@ -188,6 +189,7 @@ export function GeneratePrompt() {
       processValueChange,
       pendingDeleteFile,
       pendingDeleteVideoId,
+      pendingDeleteCameo,
       openAuthModal,
     ],
   );
@@ -216,8 +218,10 @@ export function GeneratePrompt() {
       if (!validationPrompt) return;
 
       const selectedVersion = versions.find((v) => v.id === selectedVersionId);
-      const isCameo =
-        (cameoActive && cameoRegistered) || Boolean(selectedVersion?.cameoUsed);
+      const cameoImage = cameoActive ? getLocalCameoReferenceImage() : null;
+      if (cameoActive && !cameoImage) return;
+
+      const isCameo = cameoActive && !!cameoImage;
       const generationPrompt = trimmed
         .replace(youtubeRe(), "")
         .replace(/\s{2,}/g, " ")
@@ -293,6 +297,7 @@ export function GeneratePrompt() {
             videoRefs: videoRefs.length > 0 ? videoRefs : undefined,
             sessionId: activeSessionId,
             previousGenerationId: selectedVersion?.generationId,
+            cameoImage: cameoImage ?? undefined,
             isCameo: isCameo || undefined,
           }),
         });
@@ -366,8 +371,8 @@ export function GeneratePrompt() {
       setCredits,
       clearAll,
       cameoActive,
-      cameoRegistered,
       openCreditsModal,
+      router,
     ],
   );
 
@@ -375,11 +380,11 @@ export function GeneratePrompt() {
   const cleanedEffectivePrompt = stripVideoChips(effectivePrompt, videoChips);
   const hasDuplicateChannel =
     textSegments?.some((s) => s.type === "duplicate-channel") ?? false;
-  const hasUnregisteredCameo = cameoActive && !cameoRegistered;
+  const hasMissingLocalCameo = cameoActive && !cameoAvailableLocally;
   const hasContent =
     !!cleanedEffectivePrompt &&
     !hasDuplicateChannel &&
-    !hasUnregisteredCameo &&
+    !hasMissingLocalCameo &&
     ![...channelWidgets.values()].some(
       (w) =>
         w.stage === "error" || w.stage === "loading" || w.stage === "empty",
@@ -392,7 +397,7 @@ export function GeneratePrompt() {
       return;
     }
     doSubmit(prompt);
-  }, [hasContent, prompt, loading, session, doSubmit]);
+  }, [hasContent, prompt, loading, session, openAuthModal, doSubmit]);
 
   const selectedVersion = useMemo(
     () => versions.find((v) => v.id === selectedVersionId),
@@ -673,7 +678,7 @@ export function GeneratePrompt() {
                 shouldReduceMotion={shouldReduceMotion}
                 prompt={prompt}
                 pendingDeleteVideoId={pendingDeleteVideoId}
-                cameoRegistered={cameoRegistered}
+                cameoAvailableLocally={cameoAvailableLocally}
                 pendingDeleteCameo={pendingDeleteCameo}
               />
               <PromptInputTextarea

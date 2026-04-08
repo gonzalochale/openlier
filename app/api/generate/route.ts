@@ -11,7 +11,7 @@ import {
   SAFETY_MODEL,
   THUMBNAIL_SYSTEM_PROMPT,
 } from "@/lib/constants";
-import { getCameoImages } from "@/lib/cameo/service";
+import { validateImage } from "@/lib/cameo/local";
 import {
   buildImagePrompt,
   fetchImages,
@@ -65,23 +65,18 @@ const safetySchema = z.object({
 async function resolveCameoUsage({
   prompt,
   isCameo,
-  previousVersion,
-  userId,
+  cameoImage,
 }: {
   prompt: string;
   isCameo?: boolean;
-  previousVersion?: PreviousVersion;
-  userId: string;
+  cameoImage?: ReferenceImage;
 }) {
-  const shouldAttemptCameo =
-    Boolean(isCameo) ||
-    /#(me|cameo)\b/i.test(prompt) ||
-    Boolean(previousVersion?.cameoUsed);
-  const cameoImages = shouldAttemptCameo ? await getCameoImages(userId) : null;
+  const cameoRequested = Boolean(isCameo) || /#(me|cameo)\b/i.test(prompt);
+  const shouldUseCameo = cameoRequested && Boolean(cameoImage);
 
   return {
-    cameoImages,
-    shouldUseCameo: (cameoImages?.length ?? 0) > 0,
+    cameoImages: shouldUseCameo && cameoImage ? [cameoImage] : null,
+    shouldUseCameo,
   };
 }
 
@@ -132,6 +127,7 @@ export async function POST(req: Request) {
     videoRefs,
     sessionId,
     previousGenerationId,
+    cameoImage,
     isCameo,
   } = body as {
     prompt: string;
@@ -141,6 +137,7 @@ export async function POST(req: Request) {
     videoRefs?: VideoRef[];
     sessionId?: string;
     previousGenerationId?: string;
+    cameoImage?: ReferenceImage;
     isCameo?: boolean;
   };
 
@@ -156,6 +153,27 @@ export async function POST(req: Request) {
       },
       { status: 400 },
     );
+  }
+
+  const cameoRequested = Boolean(isCameo) || /#(me|cameo)\b/i.test(prompt);
+  if (cameoRequested && !cameoImage) {
+    return Response.json(
+      {
+        error:
+          "Local cameo is missing in this browser. Re-scan it locally to use #me.",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (cameoImage) {
+    const validationError = validateImage(cameoImage.imageBase64);
+    if (validationError) {
+      return Response.json({ error: validationError }, { status: 400 });
+    }
+    if (!cameoImage.mimeType?.startsWith("image/")) {
+      return Response.json({ error: "Invalid cameo image type" }, { status: 400 });
+    }
   }
 
   const envApiKey = process.env.GOOGLE_AI_STUDIO_API_KEY?.trim();
@@ -210,8 +228,7 @@ export async function POST(req: Request) {
     const { cameoImages, shouldUseCameo } = await resolveCameoUsage({
       prompt,
       isCameo,
-      previousVersion,
-      userId: session.user.id,
+      cameoImage,
     });
 
     const reservedSlots = (previousVersion ? 1 : 0) + (shouldUseCameo ? 1 : 0);

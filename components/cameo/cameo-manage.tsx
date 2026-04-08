@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { m, AnimatePresence, useReducedMotion } from "motion/react";
 import { Trash2 } from "lucide-react";
+import { removeLocalCameo } from "@/lib/cameo/local";
 import { useCameoStore } from "@/store/use-cameo-store";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,7 +16,7 @@ const EASE_OUT = [0.25, 1, 0.5, 1] as const;
 const SPRING_BTN = { type: "spring" as const, stiffness: 500, damping: 30 };
 
 export function CameoManage({ onClose }: CameoManageProps) {
-  const setRegistered = useCameoStore((s) => s.setRegistered);
+  const setAvailableLocally = useCameoStore((s) => s.setAvailableLocally);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const rm = useReducedMotion();
@@ -24,12 +25,11 @@ export function CameoManage({ onClose }: CameoManageProps) {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const res = await fetch("/api/cameo", { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
-      setRegistered(false);
+      removeLocalCameo();
+      setAvailableLocally(false);
       onClose();
     } catch {
-      setDeleteError("Could not delete. Try again.");
+      setDeleteError("Could not remove the local cameo. Try again.");
     } finally {
       setDeleting(false);
     }
@@ -39,7 +39,11 @@ export function CameoManage({ onClose }: CameoManageProps) {
     <div className="flex flex-col gap-3">
       <p className="text-xs text-muted-foreground">
         Use <span className="font-mono text-foreground">#me</span> in any prompt
-        to appear in the scene.
+        to appear in the scene from this browser only.
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Your cameo is stored only in local browser storage and is never uploaded
+        or saved on our servers.
       </p>
       <AnimatePresence>
         {deleteError && (
@@ -62,7 +66,7 @@ export function CameoManage({ onClose }: CameoManageProps) {
           className={cn(buttonVariants({ variant: "outline" }))}
         >
           <Trash2 size={14} />
-          Remove
+          Remove local cameo
         </m.button>
       </div>
     </div>

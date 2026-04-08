@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useCameoStore } from "@/store/use-cameo-store";
+import { saveLocalCameo } from "@/lib/cameo/local";
 import { CameoScanner } from "./cameo-scanner";
 import { CameoManage } from "./cameo-manage";
 
@@ -20,52 +21,39 @@ interface CameoModalProps {
 
 const EASE = [0.25, 1, 0.5, 1] as const;
 
-type Phase = "scan" | "processing" | "upload-error";
+type Phase = "scan" | "processing" | "save-error";
 
 const HEADER: Record<Phase | "manage", { title: string; description: string }> =
   {
     scan: {
-      title: "Register Cameo",
-      description: "Scan your face to personalize thumbnails.",
+      title: "Save Cameo Locally",
+      description:
+        "Your cameo stays only in this browser and is never saved on our servers.",
     },
     processing: {
-      title: "Saving…",
-      description: "Hang tight, just a moment.",
+      title: "Saving locally…",
+      description: "Hang tight while we store your cameo in this browser.",
     },
-    "upload-error": {
-      title: "Upload failed",
-      description: "Your scan is saved — no need to redo it.",
+    "save-error": {
+      title: "Local save failed",
+      description:
+        "We could not save your cameo in this browser. Your scan is still here if you want to try again.",
     },
     manage: {
-      title: "Your Cameo",
-      description: "Your face is saved and ready to use.",
+      title: "Your Local Cameo",
+      description:
+        "This cameo lives only in this browser and is never uploaded to our servers.",
     },
   };
 
 export function CameoModal({ open, onOpenChange }: CameoModalProps) {
-  const { registered, setRegistered } = useCameoStore();
+  const { availableLocally, setAvailableLocally } = useCameoStore();
   const [phase, setPhase] = useState<Phase>("scan");
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [pendingImages, setPendingImages] = useState<
     { angle: string; base64: string }[] | null
   >(null);
-  const uploadRunIdRef = useRef(0);
-  const uploadAbortRef = useRef<AbortController | null>(null);
   const rm = useReducedMotion();
-
-  useEffect(() => {
-    if (!registered && open) {
-      setPhase("scan");
-      setPendingImages(null);
-      setUploadError(null);
-    }
-  }, [registered, open]);
-
-  useEffect(() => {
-    return () => {
-      uploadAbortRef.current?.abort();
-    };
-  }, []);
 
   const slideVariants = {
     initial: rm ? { opacity: 0 } : { opacity: 0, y: 8 },
@@ -75,60 +63,46 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
   const transition = { duration: 0.15, ease: EASE };
 
   const handleClose = useCallback(() => {
-    uploadRunIdRef.current += 1;
-    uploadAbortRef.current?.abort();
-    uploadAbortRef.current = null;
-    setUploadError(null);
+    setSaveError(null);
     setPendingImages(null);
-    if (!registered) setPhase("scan");
+    if (!availableLocally) setPhase("scan");
     onOpenChange(false);
-  }, [onOpenChange, registered]);
+  }, [availableLocally, onOpenChange]);
 
-  const upload = useCallback(
+  const handleDeleteClose = useCallback(() => {
+    setPhase("scan");
+    setSaveError(null);
+    setPendingImages(null);
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const persistLocally = useCallback(
     async (images: { angle: string; base64: string }[]) => {
-      const runId = ++uploadRunIdRef.current;
-      uploadAbortRef.current?.abort();
-      const controller = new AbortController();
-      uploadAbortRef.current = controller;
       setPhase("processing");
-      setUploadError(null);
+      setSaveError(null);
       try {
-        const res = await fetch("/api/cameo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-          body: JSON.stringify({ image: images[0].base64 }),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error ?? "Upload failed");
-        }
-        if (runId !== uploadRunIdRef.current) return;
-        setRegistered(true);
+        saveLocalCameo(images[0].base64, "image/jpeg");
+        setAvailableLocally(true);
         handleClose();
       } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-        if (runId !== uploadRunIdRef.current) return;
-        setPhase("upload-error");
-        setUploadError(err instanceof Error ? err.message : "Upload failed");
-      } finally {
-        if (uploadAbortRef.current === controller) {
-          uploadAbortRef.current = null;
-        }
+        setPhase("save-error");
+        setSaveError(
+          err instanceof Error ? err.message : "Local save failed",
+        );
       }
     },
-    [handleClose, setRegistered],
+    [handleClose, setAvailableLocally],
   );
 
   const handleScanComplete = useCallback(
     (images: { angle: string; base64: string }[]) => {
       setPendingImages(images);
-      upload(images);
+      persistLocally(images);
     },
-    [upload],
+    [persistLocally],
   );
 
-  const headerKey = registered ? "manage" : phase;
+  const headerKey = availableLocally ? "manage" : phase;
   const { title, description } = HEADER[headerKey];
 
   return (
@@ -160,7 +134,7 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
           </AnimatePresence>
         </DialogHeader>
         <AnimatePresence mode="wait">
-          {registered ? (
+          {availableLocally ? (
             <m.div
               key="manage"
               variants={slideVariants}
@@ -169,11 +143,11 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
               exit="exit"
               transition={transition}
             >
-              <CameoManage onClose={handleClose} />
+              <CameoManage onClose={handleDeleteClose} />
             </m.div>
-          ) : phase === "upload-error" ? (
+          ) : phase === "save-error" ? (
             <m.div
-              key="upload-error"
+              key="save-error"
               variants={slideVariants}
               initial="initial"
               animate="animate"
@@ -181,7 +155,7 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
               transition={transition}
               className="flex flex-col gap-3"
             >
-              <p className="text-xs text-muted-foreground">{uploadError}</p>
+              <p className="text-xs text-muted-foreground">{saveError}</p>
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => {
@@ -193,7 +167,9 @@ export function CameoModal({ open, onOpenChange }: CameoModalProps) {
                   Re-scan
                 </button>
                 <button
-                  onClick={() => pendingImages && upload(pendingImages)}
+                  onClick={() =>
+                    pendingImages && persistLocally(pendingImages)
+                  }
                   className="text-xs text-foreground underline underline-offset-3 hover:text-muted-foreground transition-colors"
                 >
                   Try again

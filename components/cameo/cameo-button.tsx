@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth/client";
 import { buttonVariants } from "@/components/ui/button";
 
 export function CameoButton() {
-  const { registered, loading: cameoLoading } = useCameoStore();
+  const { availableLocally, loading: cameoLoading } = useCameoStore();
   const generatingLoading = useThumbnailStore((s) => s.loading);
   const openCameoModal = useThumbnailUIStore((s) => s.openCameoModal);
   const openAuthModal = useThumbnailUIStore((s) => s.openAuthModal);
@@ -31,9 +31,9 @@ export function CameoButton() {
       onClick={handleClick}
       disabled={disabled}
       title={
-        registered
-          ? "Cameo registered — click to manage"
-          : "Register your Cameo"
+        availableLocally
+          ? "Cameo available in this browser — click to manage"
+          : "Save your Cameo in this browser"
       }
       className={buttonVariants({ variant: "secondary", size: "lg" })}
     >

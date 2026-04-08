@@ -14,31 +14,16 @@ import { authClient } from "@/lib/auth/client";
 export function GlobalModals() {
   const { data: session, isPending } = authClient.useSession();
   const setCredits = useThumbnailStore((s) => s.setCredits);
-  const { setRegistered, setLoading } = useCameoStore(
-    useShallow((s) => ({
-      setRegistered: s.setRegistered,
-      setLoading: s.setLoading,
-    })),
-  );
+  const hydrateCameo = useCameoStore((s) => s.hydrate);
+  const setCameoLoading = useCameoStore((s) => s.setLoading);
 
   useEffect(() => {
-    if (isPending) return;
-    if (!session) {
-      setLoading(false);
-      return;
-    }
-    const controller = new AbortController();
-    fetch("/api/cameo", { signal: controller.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        setRegistered(data.registered ?? false);
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (err?.name !== "AbortError") setLoading(false);
-      });
-    return () => controller.abort();
-  }, [isPending, session?.user.id, setRegistered, setLoading]);
+    hydrateCameo();
+  }, [hydrateCameo]);
+
+  useEffect(() => {
+    if (!isPending) setCameoLoading(false);
+  }, [isPending, setCameoLoading]);
 
   useEffect(() => {
     if (session?.user.credits != null) {

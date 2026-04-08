@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "motion/react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   type ChannelWidget,
   type VideoChip,
@@ -17,12 +17,6 @@ import {
 } from "@/components/ui/hover-card";
 import { TextScramble } from "@/components/ui/text-scramble";
 
-function hoverKey(seg: TextSegment): string | null {
-  if (seg.type === "active") return `channel:${seg.handle}`;
-  if (seg.type === "youtube-url") return `video:${seg.videoId}`;
-  return null;
-}
-
 export function PromptTextOverlay({
   textSegments,
   videoChips,
@@ -31,7 +25,7 @@ export function PromptTextOverlay({
   shouldReduceMotion,
   prompt,
   pendingDeleteVideoId,
-  cameoRegistered,
+  cameoAvailableLocally,
   pendingDeleteCameo,
 }: {
   textSegments: TextSegment[] | null;
@@ -41,51 +35,13 @@ export function PromptTextOverlay({
   shouldReduceMotion: boolean | null;
   prompt: string;
   pendingDeleteVideoId?: string | null;
-  cameoRegistered?: boolean;
+  cameoAvailableLocally?: boolean;
   pendingDeleteCameo?: string | null;
 }) {
-  const [displayedSegments, setDisplayedSegments] = useState(textSegments);
-
   const [openKey, setOpenKey] = useState<string | null>(null);
 
-  const openKeyRef = useRef<string | null>(null);
-  const animatingRef = useRef(false);
-  const pendingSegmentsRef = useRef(textSegments);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    pendingSegmentsRef.current = textSegments;
-    if (animatingRef.current) return;
-
-    const openK = openKeyRef.current;
-    const stillExists =
-      openK === null ||
-      (textSegments?.some((s) => hoverKey(s) === openK) ?? false);
-    if (stillExists) {
-      setDisplayedSegments(textSegments);
-      return;
-    }
-
-    animatingRef.current = true;
-    openKeyRef.current = null;
-    setOpenKey(null);
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = setTimeout(() => {
-      animatingRef.current = false;
-      setDisplayedSegments(pendingSegmentsRef.current);
-    }, 130);
-  }, [textSegments]);
-
   function handleSegmentOpenChange(key: string, open: boolean) {
-    const next = open ? key : null;
-    openKeyRef.current = next;
-    setOpenKey(next);
+    setOpenKey(open ? key : null);
   }
 
   return (
@@ -94,8 +50,8 @@ export function PromptTextOverlay({
       aria-hidden
       className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-word px-2 py-2 text-base leading-6 text-primary"
     >
-      {displayedSegments && prompt
-        ? displayedSegments.map((p: TextSegment, i: number) => {
+      {textSegments && prompt
+        ? textSegments.map((p: TextSegment, i: number) => {
             if (p.type === "plain")
               return <span key={`plain-${i}`}>{p.text}</span>;
 
@@ -171,7 +127,7 @@ export function PromptTextOverlay({
 
             if (p.type === "cameo") {
               const isPendingDelete = pendingDeleteCameo === p.text;
-              if (!cameoRegistered) {
+              if (!cameoAvailableLocally) {
                 const key = `cameo-error-${i}`;
                 return (
                   <HoverCard
@@ -197,8 +153,13 @@ export function PromptTextOverlay({
                     </HoverCardTrigger>
                     <HoverCardContent className="w-52" side="top" align="start">
                       <p className="text-xs text-muted-foreground">
-                        Register your <strong className="text-foreground">Cameo</strong> first to use{" "}
-                        <span className="font-mono text-foreground">{p.text}</span> in prompts.
+                        Save your{" "}
+                        <strong className="text-foreground">local Cameo</strong>{" "}
+                        in this browser first to use{" "}
+                        <span className="font-mono text-foreground">
+                          {p.text}
+                        </span>{" "}
+                        in prompts.
                       </p>
                     </HoverCardContent>
                   </HoverCard>
