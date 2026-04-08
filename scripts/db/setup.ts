@@ -98,8 +98,6 @@ const statements = [
       previous_generation_id uuid REFERENCES thumbnail_generation(id) ON DELETE SET NULL,
       channel_refs jsonb,
       video_refs jsonb,
-      text_thought_signature text,
-      image_thought_signature text,
       created_at timestamptz NOT NULL DEFAULT now()
     )
   `,
